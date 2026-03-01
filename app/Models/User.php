@@ -13,6 +13,7 @@ class User extends Authenticatable
     protected $primaryKey = 'id_user';
     public $incrementing = false;
     protected $keyType = 'string';
+    public $timestamps = false;
 
     protected $fillable = [
         'id_user',
@@ -27,11 +28,15 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+
 public function penjadwalan()
 {
     return $this->hasMany(Penjadwalan::class, 'id_user', 'id_user');
 }
 
+public function absensi() {
+    return $this->hasMany(Absensi::class, 'id_user', 'id_user');
+}
 
 }
 

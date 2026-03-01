@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\OperatorController;
+use App\Http\Controllers\PeralatanController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\PenjadwalanController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -10,21 +14,45 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     if (auth()->check()) {
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif (auth()->user()->role === 'operator') {
-            return redirect()->route('operator.dashboard');
-        }
+        return auth()->user()->role === 'admin'
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('operator.dashboard');
     }
     return redirect()->route('login');
 })->middleware(['auth'])->name('dashboard');
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
+Route::prefix('admin')->name('admin.')->middleware(['auth','role:admin'])->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::resource('/peralatan', PeralatanController::class)->names('peralatan');
+    Route::resource('/users', UserController::class)->names('users'); 
+    Route::resource('/jadwal', PenjadwalanController::class)->names('jadwal');
+
+    Route::get('/absensi', [AdminController::class, 'absensi'])->name('absensi.index');
+    Route::post('/absensi/{id}/validate', [AdminController::class, 'validateAbsensi'])->name('absensi.validate');
+    Route::post('/absensi/{id}/unvalidate', [AdminController::class, 'unvalidateAbsensi'])->name('absensi.unvalidate');
+    Route::delete('/absensi/{id}', [AdminController::class, 'destroyAbsensi'])->name('absensi.destroy');
+    
+    Route::get('/laporan', [AdminController::class, 'laporan'])->name('laporan.index');
+    Route::get('/laporan/export/pdf', [AdminController::class, 'exportPdf'])->name('laporan.exportPdf');
+    Route::get('/laporan/export/excel', [AdminController::class, 'exportExcel'])->name('laporan.exportExcel');
+
 });
 
-Route::middleware(['auth', 'role:operator'])->group(function () {
-    Route::get('/operator/dashboard', [OperatorController::class, 'dashboard'])->name('operator.dashboard');
+
+Route::prefix('operator')->name('operator.')->middleware(['auth','role:operator'])->group(function () {
+    Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
+    Route::get('/jadwal', [OperatorController::class, 'jadwal'])->name('jadwal.index');
+
+
+Route::get('/absensi', [OperatorController::class, 'absensi'])->name('absensi.index');
+Route::post('/absensi', [OperatorController::class, 'absensiStore'])->name('absensi.store');
+Route::delete('/absensi/{id}', [OperatorController::class, 'absensiCancel'])->name('absensi.cancel');
+
+    Route::get('/peralatan', [OperatorController::class, 'peralatan'])->name('peralatan.index');
 });
+
 
 require __DIR__.'/auth.php';
+
+

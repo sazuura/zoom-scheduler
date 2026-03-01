@@ -3,117 +3,140 @@
 @section('title', 'Dashboard')
 
 @section('content')
- <h4 class="h4 mb-4 text-gray-800" style="font-family: 'Nunito', sans-serif;">@yield('title')</h4>
-<div class="row">
-
-    <!-- Operator -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Jumlah Operator
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $jumlahOperator }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-user-tie fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
+<main>
+    <div class="head-title">
+        <div class="left">
+            <h1>Dashboard</h1>
         </div>
     </div>
 
-    <!-- Jadwal -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Jumlah Jadwal
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $jumlahPenjadwalan }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+    <ul class="box-info">
+        <li>
+            <i class='bx bxs-user'></i>
+            <span class="text">
+                <h3>{{ $jumlahOperator }}</h3>
+                <p>Jumlah Operator</p>
+            </span>
+        </li>
+        <li>
+            <i class='bx bxs-calendar'></i>
+            <span class="text">
+                <h3>{{ $jumlahPenjadwalan }}</h3>
+                <p>Jumlah Jadwal</p>
+            </span>
+        </li>
+        <li>
+            <i class='bx bxs-wrench'></i>
+            <span class="text">
+                <h3>{{ $jumlahPeralatan }}</h3>
+                <p>Jumlah Peralatan</p>
+            </span>
+        </li>
+    </ul>
+
+    <div class="table-data" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+        
+        <div class="order" style="padding:15px; border-radius:10px; background:#fff;">
+            <div class="head">
+                <h3>Grafik Absensi</h3>
             </div>
+            <canvas id="absensiChart" style="max-height:280px;"></canvas>
+        </div>
+
+        <div class="order" style="padding:15px; border-radius:10px; background:#fff;">
+            <div class="head">
+                <h3>Statistik Penjadwalan Operator</h3>
+            </div>
+            <canvas id="operatorChart" style="max-height:280px;"></canvas>
+        </div>
+
+        <div class="order" style="padding:15px; border-radius:10px; background:#fff;">
+            <div class="head">
+                <h3>Tren Absensi Harian</h3>
+            </div>
+            <canvas id="trenAbsensiChart" style="max-height:280px;"></canvas>
         </div>
     </div>
-
-    <!-- Peralatan -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Jumlah Peralatan
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $jumlahPeralatan }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-tools fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Grafik -->
-<div class="row">
-    <div class="col-xl-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Grafik Absensi</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="absensiChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Seberapa Sering Jadi Operator</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="operatorChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
+</main>
 @endsection
 
 @section('scripts')
 <script>
-    new Chart(document.getElementById('absensiChart'), {
+    function generatePastelColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const r = Math.floor((Math.random() * 127) + 100);
+            const g = Math.floor((Math.random() * 127) + 100);
+            const b = Math.floor((Math.random() * 127) + 100);
+            colors.push(`rgba(${r}, ${g}, ${b}, 0.7)`);
+        }
+        return colors;
+    }
+
+    const operatorChart = new Chart(document.getElementById('operatorChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($operatorLabels) !!},
+            datasets: [{
+                label: "Jumlah Jadwal",
+                backgroundColor: generatePastelColors({!! count($operatorLabels) !!}),
+                data: {!! json_encode($operatorCounts) !!}
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,     
+                easing: 'easeOutBounce' 
+            },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+
+    const absensiChart = new Chart(document.getElementById('absensiChart').getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: ['Hadir', 'Izin', 'Sakit', 'Tidak Hadir'],
             datasets: [{
                 data: [{{ $hadir }}, {{ $izin }}, {{ $sakit }}, {{ $tidakHadir }}],
-                backgroundColor: ['#1A237E', '#0D1B2A', '#2E2E2E', '#B0BEC5'],
+                backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384', '#9966FF']
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                animateScale: true,
+                animateRotate: true,
+                duration: 1200
+            }
         }
     });
 
-    new Chart(document.getElementById('operatorChart'), {
-        type: 'bar',
+    const trenAbsensiChart = new Chart(document.getElementById('trenAbsensiChart').getContext('2d'), {
+        type: 'line',
         data: {
-            labels: {!! json_encode($operatorLabels) !!},
-            datasets: [{
-                label: "Jumlah Penjadwalan",
-                backgroundColor: "#1A237E",
-                data: {!! json_encode($operatorCounts) !!}
-            }]
+            labels: {!! json_encode($tanggalLabels) !!},
+            datasets: [
+                { label: 'Hadir', data: {!! json_encode($hadirData) !!}, borderColor: '#36A2EB', fill: false },
+                { label: 'Izin', data: {!! json_encode($izinData) !!}, borderColor: '#FFCE56', fill: false },
+                { label: 'Sakit', data: {!! json_encode($sakitData) !!}, borderColor: '#FF6384', fill: false },
+                { label: 'Tidak Hadir', data: {!! json_encode($tidakHadirData) !!}, borderColor: '#9966FF', fill: false }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
+            }
         }
     });
+
 </script>
 @endsection

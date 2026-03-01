@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -8,6 +7,22 @@ class Absensi extends Model
 {
     protected $table = 'absensi';
     protected $primaryKey = 'id_absensi';
-    public $incrementing = false;
-    public $timestamps = false;
+    public $incrementing = true;
+    protected $keyType = 'int';
+
+    protected $fillable = [
+        'id_user','id_penjadwalan','tanggal','status','keterangan','validated'
+    ];
+
+    protected $casts = [
+        'tanggal' => 'date'
+    ];
+
+    public function user() {
+        return $this->belongsTo(User::class,'id_user','id_user');
+    }
+
+    public function penjadwalan() {
+        return $this->belongsTo(Penjadwalan::class,'id_penjadwalan','id_penjadwalan');
+    }
 }
