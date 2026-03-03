@@ -36,7 +36,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth','role:admin'])->group
     Route::get('/laporan', [AdminController::class, 'laporan'])->name('laporan.index');
     Route::get('/laporan/export/pdf', [AdminController::class, 'exportPdf'])->name('laporan.exportPdf');
     Route::get('/laporan/export/excel', [AdminController::class, 'exportExcel'])->name('laporan.exportExcel');
-
+    
 });
 
 

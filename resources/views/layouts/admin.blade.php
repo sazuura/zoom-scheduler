@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,14 +12,15 @@
     <!-- Custom CSS (AdminHub) -->
     <link rel="stylesheet" href="{{ asset('css/adminhub.css') }}">
 </head>
+
 <body>
 
     <!-- Sidebar -->
     <section id="sidebar">
-       <a href="{{ route('admin.dashboard') }}" class="brand" style="flex-direction: column; text-align: center;">
-    <img src="{{ asset('img/logo.png') }}" alt="Logo" style="height:60px; width:auto; margin-bottom:8px;">
-    <span class="text">DISKOMINFOTIK</span>
-</a>
+        <a href="{{ route('admin.dashboard') }}" class="brand" style="flex-direction: column; text-align: center;">
+            <img src="{{ asset('img/logo.png') }}" alt="Logo" style="height:60px; width:auto; margin-bottom:8px;">
+            <span class="text">DISKOMINFOTIK</span>
+        </a>
 
         <ul class="side-menu top">
             <li class="{{ request()->is('admin/dashboard') ? 'active' : '' }}">
@@ -62,7 +64,7 @@
         <ul class="side-menu">
             <li>
                 <a href="{{ route('logout') }}" class="logout"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class='bx bxs-log-out-circle'></i>
                     <span class="text">Logout</span>
                 </a>
@@ -79,30 +81,30 @@
     <section id="content">
         <!-- Navbar -->
         <nav style="display: flex; align-items: center; justify-content: space-between;">
-    <div style="display: flex; align-items: center;">
-        <i class='bx bx-menu'></i>
-    </div>
+            <div style="display: flex; align-items: center;">
+                <i class='bx bx-menu'></i>
+            </div>
 
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <img src="{{ asset('img/amanah.png') }}" alt="Bandung Barat Amanah" style="height:40px; width:auto;">
-        <img src="{{ asset('img/jabaristimewa.png') }}" alt="Jabar Istimewa" style="height:40px; width:auto;">
-        <img src="{{ asset('img/berakhlak.png') }}" alt="ASN BerAKHLAK" style="height:40px; width:auto;">
-        
-        <input type="checkbox" id="switch-mode" hidden>
-        <label for="switch-mode" class="switch-mode"></label>
-        
-        <a href="#" class="profile">
-            <span class="ms-2">Hallo, {{ Auth::user()->nama_user }}</span>
-        </a>
-    </div>
-</nav>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="{{ asset('img/amanah.png') }}" alt="Bandung Barat Amanah" style="height:40px; width:auto;">
+                <img src="{{ asset('img/jabaristimewa.png') }}" alt="Jabar Istimewa" style="height:40px; width:auto;">
+                <img src="{{ asset('img/berakhlak.png') }}" alt="ASN BerAKHLAK" style="height:40px; width:auto;">
+
+                <input type="checkbox" id="switch-mode" hidden>
+                <label for="switch-mode" class="switch-mode"></label>
+
+                <a href="#" class="profile">
+                    <span class="ms-2">Hallo, {{ Auth::user()->nama_user }}</span>
+                </a>
+            </div>
+        </nav>
         <!-- End Navbar -->
 
         <!-- Main Content -->
         @yield('content')
 
         <!-- Footer -->
-        
+
     </section>
 
     <!-- Scripts -->
@@ -110,4 +112,5 @@
     <script src="{{ asset('js/adminhub.js') }}"></script>
     @yield('scripts')
 </body>
+
 </html>
