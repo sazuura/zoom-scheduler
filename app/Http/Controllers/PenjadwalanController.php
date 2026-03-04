@@ -7,30 +7,48 @@ use Illuminate\Http\Request;
 class PenjadwalanController extends Controller
 {
     private $platforms = [
-        'Zoom',
-        'Google Meet',
-        'Microsoft Teams',
-        'Cisco Webex',
-        'Skype',
-        'Jitsi Meet',
-        'BlueJeans',
-        'GoToMeeting',
-        'Zoho Meeting',
-        'Slack Huddle',
-        'BigBlueButton',
-        'Whereby',
-        'Discord',
-        'Telegram Video Call',
-        'WhatsApp Call',
+        'Online (Zoom/Google Meet)',
+        'Offline (Di ruangan)',
+        // 'Microsoft Teams',
+        // 'Cisco Webex',
+        // 'Skype',
+        // 'Jitsi Meet',
+        // 'BlueJeans',
+        // 'GoToMeeting',
+        // 'Zoho Meeting',
+        // 'Slack Huddle',
+        // 'BigBlueButton',
+        // 'Whereby',
+        // 'Discord',
+        // 'Telegram Video Call',
+        // 'WhatsApp Call',
         'Lainnya'
     ];
-    
-    public function index()
+    public function index(Request $request)
     {
-        $jadwal = Penjadwalan::with('user')->get();
+        $query = Penjadwalan::with('user');
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('judul_kegiatan', 'like', "%$search%")
+                ->orWhere('tanggal', 'like', "%$search%")
+                ->orWhereRaw("DAYNAME(tanggal) LIKE ?", ["%$search%"])
+                ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('nama_user', 'like', "%$search%");
+                });
+            });
+        }
+        if ($request->platform == 'online') {
+            $query->where('platform', 'like', '%Online%');
+        } 
+        elseif ($request->platform == 'offline') {
+            $query->where('platform', 'like', '%Offline%');
+        }
+        $jadwal = $query->orderBy('tanggal', 'desc')
+                        ->paginate(5)
+                        ->withQueryString();
         return view('admin.jadwal.index', compact('jadwal'));
     }
-    
     public function create()
     {
         $operators = User::where('role', 'operator')->where('status', 'active')->get();
@@ -44,7 +62,6 @@ class PenjadwalanController extends Controller
             'platforms' => $this->platforms
         ]);
     }
-    
     public function store(Request $request)
     {
         $request->merge([
@@ -57,6 +74,7 @@ class PenjadwalanController extends Controller
             'waktu_mulai' => 'required|date_format:H:i',
             'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
             'platform' => 'required|string|max:50',
+            'keterangan' => 'required|string|max:150',
             'id_user' => 'required|exists:users,id_user',
         ]);  
         $bentrok = Penjadwalan::where('id_user', $request->id_user)
@@ -85,11 +103,11 @@ class PenjadwalanController extends Controller
             'waktu_mulai' => $request->waktu_mulai,
             'waktu_selesai' => $request->waktu_selesai,
             'platform' => $request->platform,
+            'keterangan' => $request->keterangan,
             'id_user' => $request->id_user,
         ]);
         return redirect()->route('admin.jadwal.index')->with('success', 'Jadwal berhasil ditambahkan!');
     }
-
     public function edit($id)
     {
         $jadwal = Penjadwalan::findOrFail($id);
@@ -100,7 +118,6 @@ class PenjadwalanController extends Controller
             'platforms' => $this->platforms
         ]);
     }
-
     public function update(Request $request, $id)
     {
         $request->merge([
@@ -113,6 +130,7 @@ class PenjadwalanController extends Controller
             'waktu_mulai' => 'required|date_format:H:i',
             'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
             'platform' => 'required|string|max:50',
+            'keterangan' => 'required|string|max:150',
             'id_user' => 'required|exists:users,id_user',
         ]);
         $bentrok = Penjadwalan::where('id_user', $request->id_user)
@@ -138,15 +156,21 @@ class PenjadwalanController extends Controller
             'waktu_mulai' => $request->waktu_mulai,
             'waktu_selesai' => $request->waktu_selesai,
             'platform' => $request->platform,
+            'keterangan' => $request->keterangan,
             'id_user' => $request->id_user,
         ]);
         return redirect()->route('admin.jadwal.index')->with('success', 'Jadwal berhasil diperbarui!');
     }
-
     public function destroy($id)
     {
         $jadwal = Penjadwalan::findOrFail($id);
         $jadwal->delete();
         return redirect()->route('admin.jadwal.index')->with('success', 'Jadwal berhasil dihapus!');
     }
+public function show($id)
+{
+    $jadwal = Penjadwalan::with('user')->findOrFail($id);
+
+    return view('admin.jadwal.detail', compact('jadwal'));
+}
 }

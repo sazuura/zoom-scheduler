@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\OperatorController;
@@ -21,7 +20,6 @@ Route::get('/dashboard', function () {
     return redirect()->route('login');
 })->middleware(['auth'])->name('dashboard');
 
-
 Route::prefix('admin')->name('admin.')->middleware(['auth','role:admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('/peralatan', PeralatanController::class)->names('peralatan');
@@ -39,20 +37,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth','role:admin'])->group
     
 });
 
-
 Route::prefix('operator')->name('operator.')->middleware(['auth','role:operator'])->group(function () {
     Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
     Route::get('/jadwal', [OperatorController::class, 'jadwal'])->name('jadwal.index');
-
-
-Route::get('/absensi', [OperatorController::class, 'absensi'])->name('absensi.index');
-Route::post('/absensi', [OperatorController::class, 'absensiStore'])->name('absensi.store');
-Route::delete('/absensi/{id}', [OperatorController::class, 'absensiCancel'])->name('absensi.cancel');
-
+    Route::get('/absensi', [OperatorController::class, 'absensi'])->name('absensi.index');
+    Route::post('/absensi', [OperatorController::class, 'absensiStore'])->name('absensi.store');
+    Route::delete('/absensi/{id}', [OperatorController::class, 'absensiCancel'])->name('absensi.cancel');
     Route::get('/peralatan', [OperatorController::class, 'peralatan'])->name('peralatan.index');
 });
-
-
 require __DIR__.'/auth.php';
-
-

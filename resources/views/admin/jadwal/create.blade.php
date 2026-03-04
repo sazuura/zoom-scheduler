@@ -1,7 +1,5 @@
 @extends('layouts.admin')
-
 @section('title', 'Tambah Jadwal')
-
 @section('content')
     <main>
         <div class="head-title">
@@ -92,6 +90,16 @@
                         </select>
                     </div>
 
+                    {{-- keterangan --}}
+                    <div class="mb-3">
+                        <label for="keterangan">keterangan</label>
+                        <input type="text" id="keterangan" name="keterangan" value="{{ old('keterangan') }}"
+                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">
+                        <small id="keterangan_note" style="color: #777; font-size: 13px;">
+                            Pilih platform terlebih dahulu.
+                        </small>
+                    </div>
+
                     {{-- Operator --}}
                     <div class="mb-3">
                         <label for="id_user">Operator</label>
@@ -121,4 +129,32 @@
             </div>
         </div>
     </main>
+    {{-- Detail kecil untuk pengisian keterangan --}}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const platformSelect = document.getElementById('platform');
+            const note = document.getElementById('keterangan_note');
+            const input = document.getElementById('keterangan');
+            function updateNote() {
+                const value = platformSelect.value;
+                if (value.includes('Offline')) {
+                    note.textContent = "Masukkan lokasi rapat (Gedung, Ruangan, Lantai, dll).";
+                    input.placeholder = "Contoh: Gedung A Lt.2 Ruang Rapat 1";
+                    input.type = "text";
+                }
+                else if (value.includes('Online')) {
+                    note.textContent = "Masukkan link Zoom atau Google Meet.";
+                    input.placeholder = "Contoh: https://zoom.us/j/xxxxxxx";
+                    input.type = "url";
+                }
+                else {
+                    note.textContent = "Pilih platform terlebih dahulu.";
+                    input.placeholder = "";
+                    input.type = "text";
+                }
+            }
+            platformSelect.addEventListener('change', updateNote);
+            updateNote();
+        });
+    </script>
 @endsection
