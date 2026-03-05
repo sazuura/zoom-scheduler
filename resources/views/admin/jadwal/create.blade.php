@@ -102,16 +102,66 @@
 
                     {{-- Operator --}}
                     <div class="mb-3">
-                        <label for="id_user">Operator</label>
-                        <select id="id_user" name="id_user" required
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff;">
-                            <option value="">-- Pilih Operator --</option>
-                            @foreach($operators as $op)
-                                <option value="{{ $op->id_user }}" {{ old('id_user') == $op->id_user ? 'selected' : '' }}>
-                                    {{ $op->nama_user }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <label>Operator</label>
+
+                        <div id="operator-wrapper">
+
+                            <div class="operator-item" style="display:flex; gap:10px; margin-bottom:8px;">
+
+                                <select name="id_user[]"
+                                    style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                    <option value="">-- Pilih Operator --</option>
+
+                                    @foreach($operators as $op)
+                                        <option value="{{ $op->id_user }}">
+                                            {{ $op->nama_user }}
+                                        </option>
+                                    @endforeach
+
+                                </select>
+
+                                <button type="button" class="remove-operator"
+                                    style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
+                                    <i class="bx bx-trash"></i>
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <button type="button" id="add-operator"
+                            style="margin-top:8px; padding:6px 10px; background:#3C91E6; color:white; border:none; border-radius:6px;">
+                            + Tambah Operator
+                        </button>
+
+                    </div>
+
+                    {{-- Peralatan --}}
+                    <div class="mb-3">
+                        <label>Peralatan yang Digunakan</label>
+                        <div id="peralatan-wrapper">
+                            <div class="peralatan-item" style="display:flex; gap:10px; margin-bottom:8px;">
+                                <select name="peralatan[]"
+                                    style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                    <option value="">-- Pilih Peralatan --</option>
+                                    @foreach($peralatans as $alat)
+                                        <option value="{{ $alat->id_peralatan }}">
+                                            {{ $alat->nama_peralatan }} (stok: {{ $alat->stok_tersedia }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <input type="number" name="jumlah[]" min="1" placeholder="Jumlah"
+                                    style="width:100px; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                <button type="button" class="remove-peralatan"
+                                    style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
+                                    <i class="bx bx-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-peralatan"
+                            style="margin-top:8px; padding:6px 10px; background:#3C91E6; color:white; border:none; border-radius:6px;">
+                            + Tambah Peralatan
+                        </button>
                     </div>
 
                     {{-- Tombol --}}
@@ -129,8 +179,8 @@
             </div>
         </div>
     </main>
-    {{-- Detail kecil untuk pengisian keterangan --}}
     <script>
+        // Detail kecil untuk pengisian keterangan
         document.addEventListener("DOMContentLoaded", function () {
             const platformSelect = document.getElementById('platform');
             const note = document.getElementById('keterangan_note');
@@ -155,6 +205,37 @@
             }
             platformSelect.addEventListener('change', updateNote);
             updateNote();
+        });
+        // Detail kecil untuk pengisian peralatan
+        const wrapper = document.getElementById('peralatan-wrapper');
+        const addBtn = document.getElementById('add-peralatan');
+        addBtn.addEventListener('click', function () {
+            const item = document.querySelector('.peralatan-item').cloneNode(true);
+            item.querySelector('select').value = "";
+            item.querySelector('input').value = "";
+            wrapper.appendChild(item);
+        });
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-peralatan')) {
+                if (document.querySelectorAll('.peralatan-item').length > 1) {
+                    e.target.parentElement.remove();
+                }
+            }
+        });
+        // Detail kecil untuk pengisian operator 
+        const operatorWrapper = document.getElementById('operator-wrapper');
+        const addOperatorBtn = document.getElementById('add-operator');
+        addOperatorBtn.addEventListener('click', function () {
+            const item = document.querySelector('.operator-item').cloneNode(true);
+            item.querySelector('select').value = "";
+            operatorWrapper.appendChild(item);
+        });
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-operator')) {
+                if (document.querySelectorAll('.operator-item').length > 1) {
+                    e.target.parentElement.remove();
+                }
+            }
         });
     </script>
 @endsection

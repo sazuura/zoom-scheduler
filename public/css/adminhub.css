@@ -196,6 +196,11 @@ a {
 .btn-clear:hover {
     background: #e5e7eb;
 }
+.disabled-btn {
+    background: #ccc !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
 
 /* ======================
    CLEAN PAGINATION

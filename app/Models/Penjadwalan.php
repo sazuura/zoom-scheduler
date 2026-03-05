@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
@@ -68,5 +66,9 @@ class Penjadwalan extends Model
                          ->where('waktu_selesai', '>=', $selesai);
                   });
             });
+    }
+    public function jadwalPeralatan()
+    {
+        return $this->hasMany(JadwalPeralatan::class,'id_penjadwalan','id_penjadwalan');
     }
 }

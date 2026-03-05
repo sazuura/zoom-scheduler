@@ -86,7 +86,8 @@
                                         </a>
                                         {{-- Tombol Hapus --}}
                                         @if($item->dipakai > 0)
-                                            <button class="btn-action delete" disabled title="Barang sedang digunakan dalam jadwal">
+                                            <button class="btn-action delete disabled-btn" disabled
+                                                title="Barang sedang digunakan dalam jadwal">
                                                 <i class="bx bx-trash"></i>
                                             </button>
                                         @else

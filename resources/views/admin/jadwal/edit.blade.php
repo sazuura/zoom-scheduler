@@ -107,16 +107,54 @@
                     </div>
 
                     {{-- Operator --}}
-                    <div class="mb-3" style="margin-bottom:12px;">
+                    <div class="mb-3">
                         <label>Operator</label>
-                        <select name="id_user" required
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff;">
-                            @foreach($operators as $op)
-                                <option value="{{ $op->id_user }}" {{ old('id_user', $jadwal->id_user) == $op->id_user ? 'selected' : '' }}>
-                                    {{ $op->nama_user }}
-                                </option>
+                        <div id="operator-wrapper">
+                            @foreach($selectedOperators as $opId)
+                                <div class="operator-item" style="display:flex; gap:10px; margin-bottom:8px;">
+                                    <select name="id_user[]" style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                        <option value="">-- Pilih Operator --</option>
+                                            @foreach($operators as $op)
+                                                <option value="{{ $op->id_user }}"{{ $opId == $op->id_user ? 'selected' : '' }}>
+                                                    {{ $op->nama_user }}
+                                                </option>
+                                            @endforeach
+                                    </select>
+                                    <button type="button" class="remove-operator" style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </div>
                             @endforeach
-                        </select>
+                        </div>
+                            <button type="button" id="add-operator" style="margin-top:8px; padding:6px 10px; background:#3C91E6; color:white; border:none; border-radius:6px;">
+                                + Tambah Operator
+                            </button>
+                    </div>
+
+                    {{-- Peralatan --}}
+                    <div class="mb-3">
+                        <label>Peralatan yang Digunakan</label>
+                        <div id="peralatan-wrapper">
+                            @foreach($jadwal->jadwalPeralatan as $alat)
+                                <div class="peralatan-item" style="display:flex; gap:10px; margin-bottom:8px;">
+                                    <select name="peralatan[]" style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                        <option value="">-- Pilih Peralatan --</option>
+                                            @foreach($peralatans as $p)
+                                                <option value="{{ $p->id_peralatan }}" {{ $p->id_peralatan == $alat->id_peralatan ? 'selected' : '' }}>
+                                                    {{ $p->nama_peralatan }} (stok: {{ $p->stok_tersedia }})
+                                                </option>
+                                            @endforeach
+                                    </select>
+                                    <input type="number" name="jumlah[]" value="{{ $alat->jumlah }}" min="1" style="width:100px; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                        <button type="button" class="remove-peralatan" style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                </div>
+                            @endforeach
+                        </div>
+                            <button type="button" id="add-peralatan" style="margin-top:8px; padding:6px 10px; background:#3C91E6; color:white; border:none; border-radius:6px;">
+                                + Tambah Peralatan
+                            </button>
                     </div>
 
                     {{-- Tombol --}}
@@ -134,8 +172,8 @@
             </div>
         </div>
     </main>
-    {{-- Detail kecil untuk pengisian keterangan --}}
     <script>
+        // Detail kecil untuk pengisian keterangan
         document.addEventListener("DOMContentLoaded", function () {
             const platformSelect = document.getElementById('platform');
             const note = document.getElementById('keterangan_note');
@@ -160,6 +198,38 @@
             }
             platformSelect.addEventListener('change', updateNote);
             updateNote();
+        });
+        // Detail kecil untuk pengisian operator
+        const operatorWrapper = document.getElementById('operator-wrapper');
+        const addOperatorBtn = document.getElementById('add-operator');
+        addOperatorBtn.addEventListener('click', function () {
+            const item = document.querySelector('.operator-item').cloneNode(true);
+            item.querySelector('select').value = "";
+            operatorWrapper.appendChild(item);
+
+        });
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.remove-operator')) {
+                if (document.querySelectorAll('.operator-item').length > 1) {
+                    e.target.closest('.operator-item').remove();
+                }
+            }
+        });
+        // Detail kecil untuk pengisian peralatan
+        const alatWrapper = document.getElementById('peralatan-wrapper');
+        const addAlatBtn = document.getElementById('add-peralatan');
+        addAlatBtn.addEventListener('click', function () {
+            const item = document.querySelector('.peralatan-item').cloneNode(true);
+            item.querySelector('select').value = "";
+            item.querySelector('input').value = "";
+            alatWrapper.appendChild(item);
+        });
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.remove-peralatan')) {
+                if (document.querySelectorAll('.peralatan-item').length > 1) {
+                    e.target.closest('.peralatan-item').remove();
+                }
+            }
         });
     </script>
 @endsection

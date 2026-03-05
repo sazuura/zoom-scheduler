@@ -97,8 +97,8 @@ class PeralatanController extends Controller
             'nama_peralatan' => 'required|string|max:100',
             'lokasi_penyimpanan' => 'required|string|max:255',
             'stok' => 'required|integer|min:0',
-            'rusak' => 'required|integer|min:0',
-            'perbaikan' => 'required|integer|min:0',
+            'rusak' => 'nullable|integer|min:0',
+            'perbaikan' => 'nullable|integer|min:0',
             'keterangan' => 'nullable|string|max:255',
         ]);
         if ($request->stok < $dipakai) {

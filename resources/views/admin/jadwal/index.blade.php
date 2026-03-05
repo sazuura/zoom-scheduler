@@ -1,10 +1,10 @@
 @extends('layouts.admin')
-@section('title', 'Data Jadwal Operator')
+@section('title', 'Data Jadwal Rapat')
 @section('content')
     <main>
         <div class="head-title">
             <div class="left">
-                <h1>Data Jadwal Operator</h1>
+                <h1>Data Jadwal Rapat</h1>
             </div>
             <a href="{{ route('admin.jadwal.create') }}" class="btn-download">
                 <i class="bx bx-plus"></i>
@@ -78,7 +78,10 @@
                                     {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}
                                 </td>
                                 <td>{{ str_contains($j->platform, 'Online') ? 'Online' : 'Offline' }}</td>
-                                <td>{{ $j->user->nama_user ?? '-' }}</td>
+                                <td>@foreach($j->absensi as $a)
+                                    {{ $a->user->nama_user }}@if(!$loop->last), @endif
+                                @endforeach
+                                </td>
                                 <td>
                                     <div class="action-buttons">
                                         @php
