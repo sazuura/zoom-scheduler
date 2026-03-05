@@ -167,10 +167,10 @@ class PenjadwalanController extends Controller
         $jadwal->delete();
         return redirect()->route('admin.jadwal.index')->with('success', 'Jadwal berhasil dihapus!');
     }
-public function show($id)
-{
-    $jadwal = Penjadwalan::with('user')->findOrFail($id);
+    public function show($id)
+    {
+        $jadwal = Penjadwalan::with('user')->findOrFail($id);
 
-    return view('admin.jadwal.detail', compact('jadwal'));
-}
+        return view('admin.jadwal.detail', compact('jadwal'));
+    }
 }
