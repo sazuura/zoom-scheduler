@@ -25,18 +25,15 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
-public function penjadwalan()
-{
-    return $this->hasMany(Penjadwalan::class, 'id_user', 'id_user');
-}
-
-public function absensi() {
-    return $this->hasMany(Absensi::class, 'id_user', 'id_user');
-}
-
-public function isActive()
-{
-    return $this->status === 'active';
-}
+    public function penjadwalan()
+    {
+        return $this->hasMany(Penjadwalan::class, 'id_user', 'id_user');
+    }
+    public function absensi() {
+        return $this->hasMany(Absensi::class, 'id_user', 'id_user');
+    }
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
 }

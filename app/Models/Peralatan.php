@@ -35,7 +35,6 @@ class Peralatan extends Model
 
         return max($stok, 0);
     }
-
     public function getStatusAttribute()
     {
         return $this->stok_tersedia > 0 ? 'Tersedia' : 'Tidak Tersedia';

@@ -10,7 +10,6 @@ class Penjadwalan extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
-
     protected $fillable = [
         'id_penjadwalan',
         'judul_kegiatan',
