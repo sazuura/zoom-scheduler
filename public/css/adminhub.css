@@ -11,261 +11,366 @@ a {
 }
 
 /* Custom */
-/* =========================
-   CUSTOM STYLE - USERS PAGE
-   ========================= */
+/* =================================================
+   BASE
+================================================= */
 
-/* ===== TOAST ===== */
-.toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 18px;
-    border-radius: 8px;
-    color: white;
-    font-size: 14px;
+body{
     font-family: var(--poppins);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 9999;
-    animation: slideIn 0.3s ease;
+    font-size:14px;
 }
 
-.toast-success { background: #2ecc71; }
-.toast-error { background: #e74c3c; }
+/* =================================================
+   TOAST NOTIFICATION
+================================================= */
 
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.toast{
+    position:fixed;
+    top:20px;
+    right:20px;
+    padding:12px 18px;
+    border-radius:8px;
+    color:white;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    z-index:9999;
+    animation:slideIn 0.3s ease;
 }
 
-/* ===== BADGE ===== */
-.badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-family: var(--poppins);
+.toast-success{ background:#2ecc71; }
+.toast-error{ background:#e74c3c; }
+
+@keyframes slideIn{
+    from{
+        transform:translateX(100%);
+        opacity:0;
+    }
+    to{
+        transform:translateX(0);
+        opacity:1;
+    }
 }
 
-.badge-active {
-    background: #e6f9f0;
-    color: #1abc9c;
+/* =================================================
+   BADGE (STATUS)
+================================================= */
+
+.badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:500;
 }
 
-.badge-inactive {
-    background: #fdecea;
-    color: #e74c3c;
+/* hadir */
+.badge-active{
+    background:#e6f9f0;
+    color:#1abc9c;
 }
 
-/* ===== ROW ===== */
-.row-inactive {
-    opacity: 0.6;
+/* pending */
+.badge-warning{
+    background:#fff4e5;
+    color:#f39c12;
 }
 
-/* ===== BUTTONS ===== */
-.btn-primary {
-    background: #4f46e5;
-    color: white;
-    padding: 8px 14px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-family: var(--poppins);
+/* izin */
+.badge-info{
+    background:#e8f4fd;
+    color:#3498db;
 }
 
-.btn-action {
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 15px;
-    margin: 0 2px;
-    font-family: var(--poppins);
+/* sakit */
+.badge-purple{
+    background:#f3e8ff;
+    color:#8b5cf6;
 }
 
-.btn-action.info { background: #3498db; color: white; }
-.btn-action.warning { background: #f39c12; color: white; }
-.btn-action.success { background: #2ecc71; color: white; }
-.btn-action.danger { background: #e74c3c; color: white; }
-
-/* ======================
-   TOOLBAR FIXED VERSION
-   ====================== */
-
-.toolbar {
-    margin: 15px 0 20px 0;
-    background: white;
-    padding: 14px 18px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    font-family: var(--poppins);
+/* alpha */
+.badge-danger{
+    background:#fdecea;
+    color:#e74c3c;
 }
 
-.toolbar-form {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
+/* ditolak */
+.badge-inactive{
+    background:#f1f1f1;
+    color:#555;
 }
 
-/* Force consistent font */
-.toolbar input,
-.toolbar select,
-.toolbar button,
-.toolbar a {
-    font-family: var(--poppins);
-    font-size: 14px;
+/* =================================================
+   ROW STATE
+================================================= */
+
+.row-inactive{
+    opacity:0.6;
 }
 
-/* ===== SEARCH BOX ===== */
-.search-box {
-    position: relative;
-    flex: 1;
-    max-width: 320px;
+/* =================================================
+   BUTTONS
+================================================= */
+
+.btn-primary{
+    background:#4f46e5;
+    color:white;
+    padding:8px 14px;
+    border-radius:6px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
 }
 
-.search-box i {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #999;
-    font-size: 16px;
+/* action buttons */
+
+.btn-action{
+    border:none;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:15px;
+    margin:0 2px;
+    transition:0.2s;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
 }
 
-.search-box input {
-    width: 100%;
-    height: 38px;
-    padding: 0 12px 0 38px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    transition: 0.2s;
+.btn-action:hover{
+    opacity:0.85;
 }
 
-.search-box input:focus {
-    border-color: #4f46e5;
-    outline: none;
+.btn-action.info{
+    background:#3498db;
+    color:white;
 }
 
-/* ===== FILTER GROUP ===== */
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.btn-action.warning{
+    background:#f39c12;
+    color:white;
 }
 
-.filter-group select {
-    height: 38px;
-    padding: 0 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    background: #fff;
-    appearance: none;
+.btn-action.success{
+    background:#2ecc71;
+    color:white;
 }
 
-/* ===== APPLY BUTTON ===== */
-.btn-apply {
-    height: 38px;
-    padding: 0 16px;
-    background: #4f46e5;
-    color: white;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
+.btn-action.danger{
+    background:#e74c3c;
+    color:white;
 }
 
-.btn-apply:hover {
-    background: #4338ca;
+/* disabled */
+
+.disabled-btn{
+    background:#ccc !important;
+    cursor:not-allowed;
+    opacity:0.6;
 }
 
-/* ===== RESET BUTTON ===== */
-.btn-clear {
-    height: 38px;
-    padding: 0 16px;
-    background: #f3f4f6;
-    color: #555;
-    border-radius: 8px;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    transition: 0.2s;
+/* =================================================
+   TOOLBAR
+================================================= */
+
+.toolbar{
+    margin:15px 0 20px 0;
+    background:white;
+    padding:14px 18px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.04);
 }
 
-.btn-clear:hover {
-    background: #e5e7eb;
-}
-.disabled-btn {
-    background: #ccc !important;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-/* ======================
-   CLEAN PAGINATION
-   ====================== */
-
-.pagination-clean {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    font-family: var(--poppins);
+.toolbar-form{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap;
 }
 
-.page-btn {
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    background: #f5f6fa;
-    color: #555;
-    text-decoration: none;
-    font-size: 14px;
-    transition: 0.2s ease;
+/* =================================================
+   SEARCH BOX
+================================================= */
+
+.search-box{
+    position:relative;
+    flex:1;
+    max-width:320px;
 }
 
-.page-btn:hover {
-    background: #4f46e5;
-    color: white;
+.search-box i{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#999;
+    font-size:16px;
 }
 
-.page-btn.active {
-    background: #4f46e5;
-    color: white;
-    font-weight: 600;
+.search-box input{
+    width:100%;
+    height:38px;
+    padding:0 12px 0 38px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    transition:0.2s;
 }
 
-.page-btn.disabled {
-    background: #eee;
-    color: #aaa;
-    pointer-events: none;
+.search-box input:focus{
+    border-color:#4f46e5;
+    outline:none;
 }
-/* ======================
-   FORM FIX FONT CONSISTENCY
-   ====================== */
+
+/* =================================================
+   FILTER GROUP
+================================================= */
+
+.filter-group{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.filter-group select{
+    height:38px;
+    padding:0 12px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    background:#fff;
+    appearance:none;
+}
+
+/* =================================================
+   APPLY BUTTON
+================================================= */
+
+.btn-apply{
+    height:38px;
+    padding:0 16px;
+    background:#4f46e5;
+    color:white;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.btn-apply:hover{
+    background:#4338ca;
+}
+
+/* =================================================
+   RESET BUTTON
+================================================= */
+
+.btn-clear{
+    height:38px;
+    padding:0 16px;
+    background:#f3f4f6;
+    color:#555;
+    border-radius:8px;
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    transition:0.2s;
+}
+
+.btn-clear:hover{
+    background:#e5e7eb;
+}
+
+/* =================================================
+   FORM CONSISTENCY
+================================================= */
 
 form input,
 form select,
 form textarea,
-form button {
-    font-family: var(--poppins);
-    font-size: 14px;
+form button{
+    font-family:var(--poppins);
+    font-size:14px;
 }
 
-/* Supaya benar-benar konsisten */
-.form-control {
-    font-family: var(--poppins);
-    font-size: 14px;
+.form-control{
+    font-family:var(--poppins);
+    font-size:14px;
 }
 
-/* Select fix */
-select {
-    appearance: none;
+/* =================================================
+   PAGINATION
+================================================= */
+
+.pagination-clean{
+    margin-top:20px;
+    display:flex;
+    justify-content:center;
+    gap:6px;
+}
+
+.page-btn{
+    min-width:34px;
+    height:34px;
+    padding:0 10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    background:#f5f6fa;
+    color:#555;
+    text-decoration:none;
+    font-size:14px;
+    transition:0.2s ease;
+}
+
+.page-btn:hover{
+    background:#4f46e5;
+    color:white;
+}
+
+.page-btn.active{
+    background:#4f46e5;
+    color:white;
+    font-weight:600;
+}
+
+.page-btn.disabled{
+    background:#eee;
+    color:#aaa;
+    pointer-events:none;
+}
+/* GRID DETAIL */
+.detail-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+/* dokumentasi full width */
+.dokumentasi-box{
+    grid-column:1 / span 2;
+}
+
+/* foto grid */
+.foto-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.foto-item{
+    width:180px;
+}
+
+.foto-item img{
+    width:100%;
+    border-radius:8px;
+}
+
+.foto-item p{
+    font-size:13px;
+    margin-top:5px;
 }
 /* END CUSTOM */
 

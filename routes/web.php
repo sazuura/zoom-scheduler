@@ -25,16 +25,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth','role:admin'])->group
     Route::resource('/peralatan', PeralatanController::class)->names('peralatan');
     Route::resource('/users', UserController::class)->names('users'); 
     Route::resource('/jadwal', PenjadwalanController::class)->names('jadwal');
-
-    Route::get('/absensi', [AdminController::class, 'absensi'])->name('absensi.index');
-    Route::post('/absensi/{id}/validate', [AdminController::class, 'validateAbsensi'])->name('absensi.validate');
-    Route::post('/absensi/{id}/unvalidate', [AdminController::class, 'unvalidateAbsensi'])->name('absensi.unvalidate');
-    Route::delete('/absensi/{id}', [AdminController::class, 'destroyAbsensi'])->name('absensi.destroy');
-    
+    Route::resource('/absensi', AdminController::class)->names('absensi');
+    Route::post('/absensi/{id}/{status}', [AdminController::class, 'updateStatus'])->name('absensi.updateStatus');
     Route::get('/laporan', [AdminController::class, 'laporan'])->name('laporan.index');
     Route::get('/laporan/export/pdf', [AdminController::class, 'exportPdf'])->name('laporan.exportPdf');
     Route::get('/laporan/export/excel', [AdminController::class, 'exportExcel'])->name('laporan.exportExcel');
-    
 });
 
 Route::prefix('operator')->name('operator.')->middleware(['auth','role:operator'])->group(function () {

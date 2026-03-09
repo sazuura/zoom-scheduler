@@ -12,21 +12,7 @@ class PenjadwalanController extends Controller
 {
     private $platforms = [
         'Online (Zoom/Google Meet)',
-        'Offline (Di ruangan)',
-        // 'Microsoft Teams',
-        // 'Cisco Webex',
-        // 'Skype',
-        // 'Jitsi Meet',
-        // 'BlueJeans',
-        // 'GoToMeeting',
-        // 'Zoho Meeting',
-        // 'Slack Huddle',
-        // 'BigBlueButton',
-        // 'Whereby',
-        // 'Discord',
-        // 'Telegram Video Call',
-        // 'WhatsApp Call',
-        'Lainnya'
+        'Offline (Di ruangan)'
     ];
     public function index(Request $request)
     {
@@ -60,7 +46,6 @@ class PenjadwalanController extends Controller
         $last = Penjadwalan::orderBy('id_penjadwalan', 'desc')->first();
         $newNumber = $last ? ((int) substr($last->id_penjadwalan, 2)) + 1 : 1;
         $newId = 'PJ' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
         return view('admin.jadwal.create', [
             'operators' => $operators,
             'newId' => $newId,
@@ -74,7 +59,6 @@ class PenjadwalanController extends Controller
             'waktu_mulai' => substr($request->waktu_mulai, 0, 5),
             'waktu_selesai' => substr($request->waktu_selesai, 0, 5),
         ]);
-
         $request->validate([
             'judul_kegiatan' => 'required|string|max:150',
             'tanggal' => 'required|date|after_or_equal:today',
@@ -85,10 +69,8 @@ class PenjadwalanController extends Controller
             'id_user' => 'required|array',
             'id_user.*' => 'exists:users,id_user',
         ]);
-
         // cek bentrok operator
         foreach ($request->id_user as $operatorId) {
-
             $bentrok = Penjadwalan::whereHas('absensi', function ($q) use ($operatorId) {
                     $q->where('id_user', $operatorId);
                 })
@@ -102,25 +84,19 @@ class PenjadwalanController extends Controller
                         });
                 })
                 ->exists();
-
             if ($bentrok) {
                 $operator = User::find($operatorId);
-
                 return back()
                     ->withInput()
                     ->with('error', 'Operator '.$operator->nama_user.' sudah memiliki jadwal pada waktu tersebut.');
             }
         }
-
         // generate ID jadwal
         $last = Penjadwalan::orderBy('id_penjadwalan', 'desc')->first();
         $newNumber = $last ? ((int) substr($last->id_penjadwalan, 2)) + 1 : 1;
         $newId = 'PJ' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
         DB::beginTransaction();
-
         try {
-
             // simpan jadwal
             $jadwal = Penjadwalan::create([
                 'id_penjadwalan' => $newId,
@@ -131,34 +107,25 @@ class PenjadwalanController extends Controller
                 'platform' => $request->platform,
                 'keterangan' => $request->keterangan
             ]);
-
             // simpan operator ke tabel absensi
             foreach ($request->id_user as $operatorId) {
-
                 Absensi::create([
                     'id_penjadwalan' => $jadwal->id_penjadwalan,
                     'id_user' => $operatorId,
                     'tanggal' => $request->tanggal,
-                    'status' => 'terjadwal',
+                    'status' => 'pending',
                     'keterangan' => null,
                     'validated' => 0
                 ]);
-
             }
-
             // simpan peralatan
             if ($request->peralatan) {
-
                 foreach ($request->peralatan as $index => $idPeralatan) {
-
                     if ($idPeralatan && $request->jumlah[$index]) {
-
                         $alat = Peralatan::find($idPeralatan);
-
                         if ($request->jumlah[$index] > $alat->stok_tersedia) {
                             throw new \Exception('Stok peralatan '.$alat->nama_peralatan.' tidak mencukupi.');
                         }
-
                         JadwalPeralatan::create([
                             'id_penjadwalan' => $jadwal->id_penjadwalan,
                             'id_peralatan' => $idPeralatan,
@@ -168,18 +135,13 @@ class PenjadwalanController extends Controller
                     }
                 }
             }
-
             DB::commit();
-
         } catch (\Exception $e) {
-
             DB::rollBack();
-
             return back()
                 ->withInput()
                 ->with('error', $e->getMessage());
         }
-
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil ditambahkan!');
     }
@@ -279,7 +241,6 @@ class PenjadwalanController extends Controller
             'absensi.user',
             'jadwalPeralatan.peralatan'
         ])->findOrFail($id);
-
         return view('admin.jadwal.detail', compact('jadwal'));
     }
 }

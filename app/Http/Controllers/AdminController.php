@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Penjadwalan;
 use App\Models\Absensi;
 use App\Models\Peralatan;
+use App\Models\Dokumentasi;
 use Barryvdh\DomPDF\Facade\Pdf; 
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LaporanExport;
@@ -15,104 +14,125 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        $jumlahOperator     = User::where('role', 'operator')->count();
-        $jumlahPenjadwalan  = Penjadwalan::count();
-        $jumlahPeralatan    = Peralatan::count();
-
+        $jumlahOperator    = User::where('role','operator')->count();
+        $jumlahPenjadwalan = Penjadwalan::count();
+        $jumlahPeralatan   = Peralatan::count();
+        $statusList = [
+            'hadir',
+            'izin_disetujui',
+            'sakit_disetujui',
+            'alpha'
+        ];
         $absensi = Absensi::selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
-            ->pluck('total', 'status')
-            ->toArray();
-
-        $hadir      = $absensi['hadir'] ?? 0;
-        $izin       = $absensi['izin'] ?? 0;
-        $sakit      = $absensi['sakit'] ?? 0;
-        $tidakHadir = $absensi['tidak_hadir'] ?? 0;
-
-        $operatorData = User::where('role', 'operator')
+            ->pluck('total','status');
+        $statusCounts = collect($statusList)
+            ->mapWithKeys(fn($s) => [$s => $absensi[$s] ?? 0]);
+        $operatorData = User::where('role','operator')
             ->withCount('penjadwalan')
             ->get();
         $operatorLabels = $operatorData->pluck('nama_user');
         $operatorCounts = $operatorData->pluck('penjadwalan_count');
-
-        $absensiPerTanggal = Absensi::selectRaw('tanggal, status, COUNT(*) as total')
-            ->groupBy('tanggal', 'status')
-            ->orderBy('tanggal', 'asc')
+        $records = Absensi::selectRaw('tanggal, status, COUNT(*) as total')
+            ->groupBy('tanggal','status')
+            ->orderBy('tanggal')
             ->get()
             ->groupBy('tanggal');
-
         $tanggalLabels = [];
-        $hadirData = [];
-        $izinData = [];
-        $sakitData = [];
-        $tidakHadirData = [];
-
-        foreach ($absensiPerTanggal as $tanggal => $records) {
-            $tanggalLabels[] = \Carbon\Carbon::parse($tanggal)->format('d/m');
-            $hadirData[]      = $records->firstWhere('status', 'hadir')->total ?? 0;
-            $izinData[]       = $records->firstWhere('status', 'izin')->total ?? 0;
-            $sakitData[]      = $records->firstWhere('status', 'sakit')->total ?? 0;
-            $tidakHadirData[] = $records->firstWhere('status', 'tidak_hadir')->total ?? 0;
+        $chartData = [];
+        foreach ($statusList as $status) {
+            $chartData[$status] = [];
         }
+        foreach ($records as $tanggal => $items) {
+            $tanggalLabels[] = \Carbon\Carbon::parse($tanggal)->format('d/m');
+            $map = $items->pluck('total','status');
+            foreach ($statusList as $status) {
+                $chartData[$status][] = $map[$status] ?? 0;
+            }
+        }
+        return view('admin.dashboard',[
+            'jumlahOperator'    => $jumlahOperator,
+            'jumlahPenjadwalan' => $jumlahPenjadwalan,
+            'jumlahPeralatan'   => $jumlahPeralatan,
 
-        return view('admin.dashboard', compact(
-            'jumlahOperator',
-            'jumlahPenjadwalan',
-            'jumlahPeralatan',
-            'hadir',
-            'izin',
-            'sakit',
-            'tidakHadir',
-            'operatorLabels',
-            'operatorCounts',
-            'operatorData',
-            'tanggalLabels',
-            'hadirData',
-            'izinData',
-            'sakitData',
-            'tidakHadirData'
-        ));
+            'hadir' => $statusCounts['hadir'],
+            'izin'  => $statusCounts['izin_disetujui'],
+            'sakit' => $statusCounts['sakit_disetujui'],
+            'alpha' => $statusCounts['alpha'],
+
+            'operatorLabels' => $operatorLabels,
+            'operatorCounts' => $operatorCounts,
+            'operatorData'   => $operatorData,
+
+            'tanggalLabels' => $tanggalLabels,
+            'hadirData'     => $chartData['hadir'],
+            'izinData'      => $chartData['izin_disetujui'],
+            'sakitData'     => $chartData['sakit_disetujui'],
+            'alphaData'     => $chartData['alpha'],
+        ]);
     }
-
-    public function absensi()
+    // index untuk absensi
+    public function index(Request $request)
     {
-        $absensi = Absensi::with(['user','penjadwalan'])
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
+        $query = Absensi::with(['penjadwalan','user']);
+        // SEARCH kegiatan atau operator
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('penjadwalan', function ($q2) use ($search) {
+                    $q2->where('judul_kegiatan', 'like', "%$search%");
+                })
+                ->orWhereHas('user', function ($q2) use ($search) {
+                    $q2->where('nama_user', 'like', "%$search%");
+                });
+            });
+        }
+        // FILTER STATUS
+        if ($request->status) {
+            if ($request->status == 'hadir') {
+                $query->where('status', 'hadir');
+            }
+            if ($request->status == 'tidak_hadir') {
+                $query->whereIn('status', [
+                    'izin_disetujui',
+                    'sakit_disetujui',
+                    'alpha'
+                ]);
+            }
+            if ($request->status == 'perlu_disetujui') {
+                $query->whereIn('status', [
+                    'izin',
+                    'sakit'
+                ]);
+            }
+            if ($request->status == 'pending') {
+                $query->whereIn('status', [
+                    'pending',
+                    'ditolak'
+                ]);
+            }
+        }
+        $absensi = $query
+            ->orderBy('tanggal','desc')
+            ->paginate(10)
+            ->withQueryString();
         return view('admin.absensi.index', compact('absensi'));
     }
-
-    
-    public function validateAbsensi($id)
+    public function updateStatus($id, $status)
     {
         $absen = Absensi::findOrFail($id);
-        $absen->update(['validated' => 1]);
-
-        return redirect()->route('admin.absensi.index')->with('success', 'Absensi berhasil divalidasi.');
+        $absen->update([
+            'status' => $status
+        ]);
+        return redirect()->route('admin.absensi.index')
+            ->with('success', 'Status absensi berhasil diperbarui.');
     }
-
-    
-    public function unvalidateAbsensi($id)
+    public function show($id)
     {
-        $absen = Absensi::findOrFail($id);
-        $absen->update(['validated' => 0]);
-
-        return redirect()->route('admin.absensi.index')->with('success', 'Validasi absensi dibatalkan.');
+        $absensi = Absensi::with(['user','dokumentasi','penjadwalan'])->findOrFail($id);
+        return view('admin.absensi.detail', compact('absensi'));
     }
-
-    
-    public function destroyAbsensi($id)
-    {
-        $absen = Absensi::findOrFail($id);
-        $absen->delete();
-
-        return redirect()->route('admin.absensi.index')->with('success', 'Absensi berhasil dihapus.');
-    }
-
-    
-public function laporan(Request $request)
+    public function laporan(Request $request)
     {
         $query = Penjadwalan::with(['user','absensi']);
 
@@ -131,8 +151,6 @@ public function laporan(Request $request)
 
         return view('admin.laporan.index', compact('jadwal','operators'));
     }
-
-    
     public function exportPdf(Request $request)
     {
         $query = Penjadwalan::with(['user','absensi']);
@@ -146,8 +164,6 @@ public function laporan(Request $request)
         $pdf = Pdf::loadView('admin.laporan.pdf', compact('jadwal'));
         return $pdf->download('laporan-penjadwalan.pdf');
     }
-
-    
     public function exportExcel(Request $request)
     {
         return Excel::download(new LaporanExport($request), 'laporan-penjadwalan.xlsx');
