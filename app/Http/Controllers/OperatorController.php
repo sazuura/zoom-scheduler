@@ -5,15 +5,22 @@ use Carbon\Carbon;
 use App\Models\Penjadwalan;
 use App\Models\Peralatan;
 use App\Models\Absensi;
+use App\Models\JadwalPeralatan;
 
 class OperatorController extends Controller
 {
     public function dashboard()
     {
         $userId = auth()->user()->id_user;
-        $jumlahJadwal = Penjadwalan::where('id_user', $userId)->count();
-        $jumlahAbsensi = Absensi::where('id_user', $userId)->count();
-        $jumlahPeralatan = Peralatan::count();
+        $jumlahJadwal = Absensi::where('id_user', $userId)->count();
+        $jumlahAbsensi = Absensi::where('id_user', $userId)->where('status', 'hadir')->count();
+        $jumlahPeralatan = JadwalPeralatan::with([
+            'peralatan',
+            'penjadwalan'
+        ])
+        ->whereHas('penjadwalan.absensi', function ($q) use ($userId) {
+            $q->where('id_user', $userId);
+        })-> count();
         $absensi = Absensi::where('id_user', $userId)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
@@ -49,27 +56,40 @@ class OperatorController extends Controller
     public function absensi()
     {
         $userId = auth()->user()->id_user;
-
-    $jadwalHariIni = Absensi::with([
-        'penjadwalan.jadwalPeralatan.peralatan',
-        'dokumentasi'
+        $now = Carbon::now('Asia/Jakarta');
+        $absensi = Absensi::with('penjadwalan')
+            ->where('id_user', $userId)
+            ->get();
+        foreach ($absensi as $a) {
+            $end = $a->penjadwalan->endDateTime ?? null;
+            if ($end && $now->gt($end)) {
+                if (!in_array($a->status, ['hadir','izin','sakit','alpha','izin_disetujui','sakit_disetujui'])) {
+                    $a->update([
+                        'status' => 'alpha',
+                        'keterangan' => 'Tidak melakukan presensi'
+                    ]);
+                }
+            }
+        }
+        $jadwalHariIni = Absensi::with([
+            'penjadwalan.jadwalPeralatan.peralatan',
+            'dokumentasi'
         ])
-        ->where('id_user', $userId)
-        ->whereDate('tanggal', today())
-        ->orderByDesc('created_at')
-        ->get();
-
+            ->where('id_user', $userId)
+            ->whereDate('tanggal', today())
+            ->orderByDesc('created_at')
+            ->get();
         $absensiSaya = Absensi::with([
             'penjadwalan',
             'dokumentasi'
         ])
-        ->where('id_user', $userId)
-        ->orderBy('tanggal','desc')
-        ->get();
-
+            ->where('id_user', $userId)
+            ->orderBy('tanggal','desc')
+            ->paginate(5)
+            ->withQueryString();
         return view('operator.absensi.index', compact(
             'jadwalHariIni',
-            'absensiSaya'
+            'absensiSaya',
         ));
     }
     public function absensiStore(Request $request)
@@ -148,5 +168,27 @@ class OperatorController extends Controller
         $absen->delete();
 
         return back()->with('success', 'Absensi dibatalkan.');
+    }
+    public function peralatan()
+    {
+        $userId = auth()->user()->id_user;
+        $peralatan = JadwalPeralatan::with([
+            'peralatan',
+            'penjadwalan'
+        ])
+        ->whereHas('penjadwalan.absensi', function ($q) use ($userId) {
+            $q->where('id_user', $userId);
+        })
+        ->orderByDesc('id_jadwal_alat')
+        ->get();
+        return view('operator.peralatan.index', compact('peralatan'));
+    }
+    public function peralatanUpdate($id)
+    {
+        $alat = JadwalPeralatan::findOrFail($id);
+        $alat->update([
+            'status_pemasangan' => 'sudah_dipasang'
+        ]);
+        return back()->with('success','Peralatan berhasil divalidasi.');
     }
 }

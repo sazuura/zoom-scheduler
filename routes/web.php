@@ -39,5 +39,6 @@ Route::prefix('operator')->name('operator.')->middleware(['auth','role:operator'
     Route::post('/absensi', [OperatorController::class, 'absensiStore'])->name('absensi.store');
     Route::delete('/absensi/{id}', [OperatorController::class, 'absensiCancel'])->name('absensi.cancel');
     Route::get('/peralatan', [OperatorController::class, 'peralatan'])->name('peralatan.index');
+    Route::patch('/peralatan/{id}', [OperatorController::class, 'peralatanUpdate'])->name('peralatan.update');
 });
 require __DIR__.'/auth.php';

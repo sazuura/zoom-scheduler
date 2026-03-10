@@ -21,7 +21,7 @@
                 <i class='bx bxs-check-circle'></i>
                 <span class="text">
                     <h3>{{ $jumlahAbsensi }}</h3>
-                    <p>Total Absensi</p>
+                    <p>Total Presensi</p>
                 </span>
             </li>
             <li>
@@ -37,7 +37,7 @@
             <!-- Grafik Absensi -->
             <div class="order" style="min-height: 280px;">
                 <div class="head">
-                    <h3>Grafik Absensi Saya</h3>
+                    <h3>Grafik Presensi Saya</h3>
                 </div>
                 <div style="height:220px; display:flex; align-items:center; justify-content:center;">
                     <canvas id="absensiChart"></canvas>

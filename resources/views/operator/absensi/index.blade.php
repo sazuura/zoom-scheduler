@@ -1,17 +1,17 @@
 @extends('layouts.operator')
-@section('title', 'Absensi Saya')
+@section('title', 'Presensi Saya')
 @section('content')
     <main>
         <div class="head-title">
             <div class="left">
-                <h1>Absensi Saya</h1>
+                <h1>Presensi Saya</h1>
             </div>
         </div>
         {{-- Absen Hari Ini --}}
         <div class="table-data">
             <div class="order">
                 <div class="head">
-                    <h3>Absen Hari Ini</h3>
+                    <h3>Jadwal Hari Ini</h3>
                 </div>
                 @if($jadwalHariIni->isEmpty())
                     <div style="background:#fff; padding:12px; border-radius:8px;">
@@ -83,7 +83,7 @@
         <div class="table-data" style="margin-top:20px;">
             <div class="order">
                 <div class="head">
-                    <h3>Riwayat Absensi</h3>
+                    <h3>Riwayat Presensi</h3>
                 </div>
                 <table>
                     <thead>
@@ -152,5 +152,37 @@
                 </table>
             </div>
         </div>
+            @if ($absensiSaya->hasPages())
+                <div class="pagination-clean">
+                    {{-- Previous --}}
+                    @if ($absensiSaya->onFirstPage())
+                        <span class="page-btn disabled">
+                            <i class="bx bx-chevron-left"></i>
+                        </span>
+                    @else
+                        <a href="{{ $absensiSaya->previousPageUrl() }}" class="page-btn">
+                            <i class="bx bx-chevron-left"></i>
+                        </a>
+                    @endif
+                    {{-- Page Numbers --}}
+                    @foreach ($absensiSaya->getUrlRange(1, $absensiSaya->lastPage()) as $page => $url)
+                        @if ($page == $absensiSaya->currentPage())
+                            <span class="page-btn active">{{ $page }}</span>
+                        @else
+                            <a href="{{ $url }}" class="page-btn">{{ $page }}</a>
+                        @endif
+                    @endforeach
+                    {{-- Next --}}
+                    @if ($absensiSaya->hasMorePages())
+                        <a href="{{ $absensiSaya->nextPageUrl() }}" class="page-btn">
+                            <i class="bx bx-chevron-right"></i>
+                        </a>
+                    @else
+                        <span class="page-btn disabled">
+                            <i class="bx bx-chevron-right"></i>
+                        </span>
+                    @endif
+                </div>
+            @endif
     </main>
 @endsection
