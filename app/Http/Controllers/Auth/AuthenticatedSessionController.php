@@ -21,6 +21,10 @@ class AuthenticatedSessionController extends Controller
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'g-recaptcha-response' => 'required|captcha'
+        ],[
+            'g-recaptcha-response.required' => 'Captcha wajib diisi.',
+            'g-recaptcha-response.captcha' => 'Captcha tidak valid.'
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
