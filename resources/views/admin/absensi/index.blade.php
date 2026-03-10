@@ -1,10 +1,10 @@
 @extends('layouts.admin')
-@section('title', 'Validasi Absensi')
+@section('title', 'Validasi Presensi')
 @section('content')
     <main>
         <div class="head-title">
             <div class="left">
-                <h1>Validasi Absensi</h1>
+                <h1>Validasi Presensi</h1>
             </div>
         </div>
         <div class="toolbar">
@@ -43,7 +43,7 @@
         <div class="table-data">
             <div class="order">
                 <div class="head">
-                    <h3>Data Absensi</h3>
+                    <h3>Data Presensi</h3>
                 </div>
                 <table>
                     <thead>

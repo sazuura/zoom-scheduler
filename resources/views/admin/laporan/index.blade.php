@@ -1,7 +1,5 @@
 @extends('layouts.admin')
-
 @section('title', 'Laporan Penjadwalan')
-
 @section('content')
 <main>
     <div class="head-title">
@@ -9,63 +7,60 @@
             <h1>Laporan Penjadwalan</h1>
         </div>
     </div>
-
-    <div class="card" style="margin-bottom:20px; border-radius:8px; border:1px solid #ddd;">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.laporan.index') }}">
-                <div class="row" style="display:flex; flex-wrap:wrap; gap:16px;">
-
-                    <div class="col" style="flex:1; min-width:200px;">
-                        <label class="form-label" style="font-size:13px; font-weight:600;">Dari Tanggal</label>
-                        <input type="date" name="start" value="{{ request('start') }}"
-                               class="form-control"
-                               style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px;">
-                    </div>
-
-                    <div class="col" style="flex:1; min-width:200px;">
-                        <label class="form-label" style="font-size:13px; font-weight:600;">Sampai Tanggal</label>
-                        <input type="date" name="end" value="{{ request('end') }}"
-                               class="form-control"
-                               style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px;">
-                    </div>
-
-                    <div class="col" style="flex:1; min-width:200px;">
-                        <label class="form-label" style="font-size:13px; font-weight:600;">Operator</label>
-                        <select name="operator" class="form-select"
-                                style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px;">
-                            <option value="">Semua</option>
-                            @foreach($operators as $op)
-                                <option value="{{ $op->id_user }}" {{ request('operator') == $op->id_user ? 'selected' : '' }}>
-                                    {{ $op->nama_user }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col" style="align-self:flex-end;">
-                        <button type="submit" class="btn-download"
-                                style="padding:8px 18px; background:#3C91E6; color:#fff; border:none; border-radius:6px; font-weight:600;">
-                            Filter
-                        </button>
-                    </div>
+    <div class="toolbar">
+        <form method="GET" action="{{ route('admin.laporan.index') }}" class="toolbar-form">
+            {{-- LEFT SIDE --}}
+            <div class="search-box" style="display:flex; gap:10px; max-width:none;">
+                <div style=" flex-direction:column;">
+                    <label style="font-size:12px; font-weight:600;">Dari Tanggal</label>
+                    <input type="date" name="start"value="{{ request('start') }}"class="form-control">
                 </div>
-            </form>
-        </div>
+                <div style=" flex-direction:column;">
+                    <label style="font-size:12px; font-weight:600;">Sampai Tanggal</label>
+                    <input type="date" name="end" value="{{ request('end') }}"class="form-control">
+                </div>
+            </div>
+            {{-- RIGHT SIDE --}}
+            <div class="filter-group" style="align-items:flex-end;">
+                <div style="display:flex; flex-direction:column;">
+                    <label style="font-size:12px; font-weight:600;">Operator</label>
+                    <select name="operator">
+                        <option value="">Semua Operator</option>
+                        @foreach($operators as $op)
+                            <option value="{{ $op->id_user }}"
+                                {{ request('operator') == $op->id_user ? 'selected' : '' }}>
+                                {{ $op->nama_user }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="btn-apply">
+                    Terapkan
+                </button>
+                @if(request()->hasAny(['start','end','operator']))
+                    <a href="{{ route('admin.laporan.index') }}" class="btn-clear">
+                        Reset
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
-<div class="col" style="align-self:flex-end; display:flex; gap:10px;">
-    <a href="{{ route('admin.laporan.exportPdf', request()->all()) }}" class="btn"
-       style="padding:8px 18px; background:#DB504A; color:#fff; border-radius:6px; text-decoration:none;">
-        Export PDF
-    </a>
-    <a href="{{ route('admin.laporan.exportExcel', request()->all()) }}" class="btn"
-       style="padding:8px 18px; background:#3C91E6; color:#fff; border-radius:6px; text-decoration:none;">
-        Export Excel
-    </a>
-</div>
-
+    <div class="col" style="align-self:flex-end; display:flex; gap:10px;">
+        <a href="{{ route('admin.laporan.exportPdf', request()->all()) }}" class="btn"
+        style="padding:8px 18px; background:#DB504A; color:#fff; border-radius:6px; text-decoration:none;">
+        <i class='bx bxs-file-pdf'></i>
+            Export PDF
+        </a>
+        <a href="{{ route('admin.laporan.exportExcel', request()->all()) }}" class="btn"
+        style="padding:8px 18px; background:#3C91E6; color:#fff; border-radius:6px; text-decoration:none;">
+        <i class='bx bxs-file-export'></i>
+            Export Excel
+        </a>
+    </div>
     <div class="table-data">
         <div class="order">
             <div class="head">
-                <h3>Rekap Jadwal & Absensi</h3>
+                <h3>Rekap Jadwal & Presensi</h3>
             </div>
             <table>
                 <thead>
@@ -74,36 +69,48 @@
                         <th>Judul Kegiatan</th>
                         <th>Operator</th>
                         <th>Waktu</th>
-                        <th>Status Absensi</th>
+                        <th>Status Presensi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($jadwal as $j)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($j->tanggal)->format('d/m/Y') }}</td>
-                            <td>{{ $j->judul_kegiatan }}</td>
-                            <td>{{ $j->user->nama_user ?? '-' }}</td>
-                            <td>{{ $j->waktu_mulai }} - {{ $j->waktu_selesai }}</td>
-                            <td>
-                                @php
-                                    $absen = $j->absensi->first();
-                                @endphp
-                                @if($absen)
-                                    {{ ucfirst($absen->status) }}
-                                    @if($absen->validated)
-                                        <span style="color:green;">(Valid)</span>
-                                    @else
-                                        <span style="color:orange;">(Menunggu)</span>
-                                    @endif
-                                @else
-                                    <span style="color:red;">Belum Absen</span>
-                                @endif
-                            </td>
-                        </tr>
+                    @forelse($absensi as $j)
+                    <tr>
+                        <td>{{ \Carbon\Carbon::parse($j->tanggal)->format('d/m/Y') }}</td>
+                        <td>{{ $j->penjadwalan->judul_kegiatan }}</td>
+                        <td>{{ $j->user->nama_user ?? '-' }}</td>
+                        <td>{{ $j->penjadwalan->waktu_mulai }} - {{ $j->penjadwalan->waktu_selesai }}</td>
+                        <td>
+                            @if($j)
+                                @switch($j->status)
+                                @case('hadir')
+                                    <span class="badge badge-active">Hadir</span>
+                                @break
+                                @case('izin')
+                                    <span class="badge badge-info">Izin</span>
+                                @break
+                                @case('sakit')
+                                    <span class="badge badge-purple">Sakit</span>
+                                @break
+                                @case('alpha')
+                                    <span class="badge badge-danger">Alpha</span>
+                                @break
+                                @case('ditolak')
+                                    <span class="badge badge-inactive">Ditolak</span>
+                                @break
+                                @default
+                                    <span class="badge badge-warning">Pending</span>
+                                @endswitch
+                            @else
+                                <span class="badge badge-danger">Belum Absen</span>
+                            @endif
+                        </td>
+                    </tr>
                     @empty
-                        <tr>
-                            <td colspan="5" class="text-center">Tidak ada data jadwal.</td>
-                        </tr>
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            Tidak ada data jadwal.
+                        </td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>

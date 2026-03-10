@@ -14,7 +14,7 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        $jumlahOperator    = User::where('role','operator')->count();
+        $jumlahOperator    = User::where('role','operator')->where('status','active')->count();
         $jumlahPenjadwalan = Penjadwalan::count();
         $jumlahPeralatan   = Peralatan::count();
         $statusList = [
@@ -134,8 +134,10 @@ class AdminController extends Controller
     }
     public function laporan(Request $request)
     {
-        $query = Penjadwalan::with(['user','absensi']);
-
+        $query = Absensi::with([
+            'user',
+            'penjadwalan'
+        ]);
         if ($request->start) {
             $query->whereDate('tanggal', '>=', $request->start);
         }
@@ -145,11 +147,9 @@ class AdminController extends Controller
         if ($request->operator) {
             $query->where('id_user', $request->operator);
         }
-
-        $jadwal = $query->orderBy('tanggal','desc')->get();
+        $absensi = $query->orderBy('tanggal','desc')->get();
         $operators = User::where('role','operator')->get();
-
-        return view('admin.laporan.index', compact('jadwal','operators'));
+        return view('admin.laporan.index', compact('absensi','operators'));
     }
     public function exportPdf(Request $request)
     {

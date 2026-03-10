@@ -44,7 +44,7 @@
             <li class="{{ request()->is('admin/absensi*') ? 'active' : '' }}">
                 <a href="{{ url('/admin/absensi') }}">
                     <i class='bx bxs-check-circle'></i>
-                    <span class="text">Absensi</span>
+                    <span class="text">Presensi</span>
                 </a>
             </li>
             <li class="{{ request()->is('admin/peralatan*') ? 'active' : '' }}">
