@@ -85,7 +85,7 @@
                                             <i class="bx bx-edit"></i>
                                         </a>
                                         {{-- Tombol Hapus --}}
-                                        @if($item->dipakai > 0)
+                                        @if($item->dipakai > 0 || $item->stok_tersedia <= 0)
                                             <button class="btn-action delete disabled-btn" disabled
                                                 title="Barang sedang digunakan dalam jadwal">
                                                 <i class="bx bx-trash"></i>

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\Peralatan;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PeralatanController extends Controller
@@ -42,17 +43,22 @@ class PeralatanController extends Controller
 
         return view('admin.peralatan.index', compact('peralatan'));
     }
-    public function create()
+    public function create(Request $request)
     {
-        $last = Peralatan::orderBy('id_peralatan', 'desc')->first();
-        if ($last) {
-            $lastNumber = (int) substr($last->id_peralatan, 3);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        $newId = 'PR-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-        return view('admin.peralatan.create', compact('newId'));
+        $tanggal = $request->tanggal;
+        $mulai = $request->waktu_mulai;
+        $selesai = $request->waktu_selesai;
+        $operators = User::where('role', 'operator')
+            ->whereDoesntHave('penjadwalan', function ($q) use ($tanggal, $mulai, $selesai) {
+                $q->where('tanggal', $tanggal)
+                ->where(function ($query) use ($mulai, $selesai) {
+                    $query->whereBetween('waktu_mulai', [$mulai, $selesai])
+                            ->orWhereBetween('waktu_selesai', [$mulai, $selesai]);
+                });
+            })
+            ->get();
+        $peralatans = Peralatan::where('stok_tersedia', '>', 0)->get();
+        return view('admin.penjadwalan.create', compact('operators', 'peralatans'));
     }
     public function store(Request $request)
     {

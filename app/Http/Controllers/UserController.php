@@ -69,7 +69,7 @@ class UserController extends Controller
     {
         $request->validate([
             'nama_user' => 'required|string|max:100',
-            'nohp' => 'required|string|max:20|unique:users,nohp',
+            'nohp' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . $id_user . ',id_user',
             'password' => 'nullable|string|min:6',
             'role' => 'required|in:admin,operator',
