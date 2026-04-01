@@ -80,7 +80,7 @@ class PenjadwalanController extends Controller
                         ->orWhereBetween('waktu_selesai', [$request->waktu_mulai, $request->waktu_selesai])
                         ->orWhere(function ($q) use ($request) {
                             $q->where('waktu_mulai', '<=', $request->waktu_mulai)
-                                ->where('waktu_selesai', '>=', $request->waktu_selesai);
+                            ->where('waktu_selesai', '>=', $request->waktu_selesai);
                         });
                 })
                 ->exists();
@@ -142,6 +142,21 @@ class PenjadwalanController extends Controller
                 ->withInput()
                 ->with('error', $e->getMessage());
         }
+        // kirim notifikasi WA ke operator
+        foreach ($request->id_user as $operatorId) {
+            $user = User::find($operatorId);
+            if ($user && $user->nohp) {
+                $pesan = "📢 *JADWAL BARU*\n\n".
+                "Halo {$user->nama_user},\n".
+                "Anda mendapatkan jadwal baru.\n\n".
+                "📅 Tanggal : {$request->tanggal}\n".
+                "⏰ Waktu   : {$request->waktu_mulai} - {$request->waktu_selesai}\n".
+                "📌 Kegiatan: {$request->judul_kegiatan}\n".
+                "💻 Platform: {$request->platform}\n\n".
+                "Silakan cek sistem untuk detail.";
+                $this->kirimWA($user->nohp, $pesan);
+            }
+        }
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil ditambahkan!');
     }
@@ -151,7 +166,7 @@ class PenjadwalanController extends Controller
             'absensi.user',
             'jadwalPeralatan.peralatan'
         ])->findOrFail($id);
-        $operators = User::all();
+        $operators = User::where('role', 'operator')->where('status', 'active')->get();
         $peralatans = Peralatan::all();
         $selectedOperators = $jadwal->absensi->pluck('id_user')->toArray();
         $platforms = [
@@ -197,7 +212,7 @@ class PenjadwalanController extends Controller
                     'id_penjadwalan' => $jadwal->id_penjadwalan,
                     'id_user' => $operatorId,
                     'tanggal' => $request->tanggal,
-                    'status' => 'terjadwal'
+                    'status' => 'pending'
                 ]);
             }
             // UPDATE PERALATAN
@@ -242,5 +257,24 @@ class PenjadwalanController extends Controller
             'jadwalPeralatan.peralatan'
         ])->findOrFail($id);
         return view('admin.jadwal.detail', compact('jadwal'));
+    }
+    private function kirimWA($nomor, $pesan)
+    {
+        $token = env('FONNTE_TOKEN');
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => "https://api.fonnte.com/send",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [
+                'target' => $nomor,
+                'message' => $pesan,
+            ],
+            CURLOPT_HTTPHEADER => [
+                "Authorization: $token"
+            ],
+        ]);
+        curl_exec($curl);
+        curl_close($curl);
     }
 }

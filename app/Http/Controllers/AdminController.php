@@ -9,6 +9,7 @@ use App\Models\Dokumentasi;
 use Barryvdh\DomPDF\Facade\Pdf; 
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LaporanExport;
+use App\Models\JadwalPeralatan;
 
 class AdminController extends Controller
 {
@@ -148,20 +149,24 @@ class AdminController extends Controller
             $query->where('id_user', $request->operator);
         }
         $absensi = $query->orderBy('tanggal','desc')->get();
+        $jadwalPeralatan = JadwalPeralatan::with(['penjadwalan','peralatan'])->get();
         $operators = User::where('role','operator')->get();
-        return view('admin.laporan.index', compact('absensi','operators'));
+        return view('admin.laporan.index', compact('absensi','operators','jadwalPeralatan'));
     }
     public function exportPdf(Request $request)
     {
-        $query = Penjadwalan::with(['user','absensi']);
-
-        if ($request->start) $query->whereDate('tanggal','>=',$request->start);
-        if ($request->end) $query->whereDate('tanggal','<=',$request->end);
-        if ($request->operator) $query->where('id_user',$request->operator);
-
-        $jadwal = $query->orderBy('tanggal','desc')->get();
-
-        $pdf = Pdf::loadView('admin.laporan.pdf', compact('jadwal'));
+        $query = Absensi::with(['user','penjadwalan']);
+        if ($request->start) {
+            $query->whereDate('tanggal','>=',$request->start);
+        }
+        if ($request->end) {
+            $query->whereDate('tanggal','<=',$request->end);
+        }
+        if ($request->operator) {
+            $query->where('id_user',$request->operator);
+        }
+        $absensi = $query->orderBy('tanggal','desc')->get();
+        $pdf = Pdf::loadView('admin.laporan.pdf', compact('absensi'));
         return $pdf->download('laporan-penjadwalan.pdf');
     }
     public function exportExcel(Request $request)

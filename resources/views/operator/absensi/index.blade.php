@@ -32,45 +32,58 @@
                         <tbody>
                             @php
                                 $now = \Carbon\Carbon::now('Asia/Jakarta');
+                                $today = $now->toDateString();
                             @endphp
                             @foreach($jadwalHariIni as $jadwal)
                                 @php
                                     $start = $jadwal->penjadwalan->startDateTime ?? null;
                                     $end = $jadwal->penjadwalan->endDateTime ?? null;
                                     $inTime = $start && $end ? $now->between($start, $end) : false;
+                                    $hMinus1 = $start ? $start->copy()->subDay()->toDateString() : null;
+                                    $canHadir = $start && $today == $start->toDateString() && $inTime;
+                                    $canIzinSakit = $start && $today <= $hMinus1;
+                                    $canSubmit = $jadwal->status === 'pending' && ($canHadir || $canIzinSakit);
                                 @endphp
                                 <tr>
-                                    <form action="{{ route('operator.absensi.store') }}" method="POST">
-                                        @csrf
+                                    <td>{{ $jadwal->penjadwalan->judul_kegiatan }}</td>
+                                    <td>{{ $start ? $start->format('d/m/Y') : '-' }}</td>
+                                    <td>{{ $start ? $start->format('H:i') : '-' }} - {{ $end ? $end->format('H:i') : '-' }}</td>
+
+                                    @if($canSubmit)
                                         <td>
-                                            {{ $jadwal->penjadwalan->judul_kegiatan }}
-                                            <input type="hidden" name="id_penjadwalan" value="{{ $jadwal->id_penjadwalan }}">
-                                        </td>
-                                        <td>
-                                            {{ $start ? $start->format('d/m/Y') : '-' }}
-                                        </td>
-                                        <td>
-                                            {{ $start ? $start->format('H:i') : '-' }}
-                                            -
-                                            {{ $end ? $end->format('H:i') : '-' }}
-                                        </td>
-                                        <td>
-                                            <select name="status" class="absensi-select" required>
-                                                <option value="hadir">Hadir</option>
-                                                <option value="izin">Izin</option>
-                                                <option value="sakit">Sakit</option>
+                                            <select name="status" id="status-{{ $jadwal->id_absensi }}"class="absensi-select" required>
+                                                @if($canHadir)
+                                                    <option value="hadir">Hadir</option>
+                                                @endif
+                                                @if($canIzinSakit)
+                                                    <option value="izin">Izin</option>
+                                                    <option value="sakit">Sakit</option>
+                                                @endif
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="text" name="keterangan" class="absensi-input"
-                                                placeholder="Alasan jika izin / sakit">
+                                            <input type="text" name="keterangan" class="absensi-input" placeholder="Alasan jika izin / sakit">
                                         </td>
                                         <td>
-                                            <button type="submit" class="absensi-btn" {{ !$inTime ? 'disabled' : '' }}>
-                                                Kirim
-                                            </button>
+                                            <form action="{{ route('operator.absensi.store') }}" method="POST" onsubmit="return confirmSubmit(this)">
+                                                @csrf
+                                                <input type="hidden" name="id_absensi" value="{{ $jadwal->id_absensi }}">
+                                                <input type="hidden" name="status" id="hidden-status-{{ $jadwal->id_absensi }}">
+                                                <input type="hidden" name="keterangan" id="hidden-keterangan-{{ $jadwal->id_absensi }}">
+                                                <button type="submit" class="absensi-btn" onclick="
+                                                    document.getElementById('hidden-status-{{ $jadwal->id_absensi }}').value = document.getElementById('status-{{ $jadwal->id_absensi }}').value;
+                                                    document.getElementById('hidden-keterangan-{{ $jadwal->id_absensi }}').value = document.getElementById('keterangan-{{ $jadwal->id_absensi }}').value;
+                                                ">Kirim</button>
+                                            </form>
                                         </td>
-                                    </form>
+                                    @else
+                                        <td></td>
+                                        @if ($jadwal->status != 'alpha')
+                                            <td colspan="3"><span class="text-muted">Sudah absen ({{ ucfirst($jadwal->status) }})</span></td>
+                                        @else
+                                            <td colspan="3"><span class="text-muted">Belum absen ({{ ucfirst($jadwal->status) }})</span></td>
+                                        @endif                                       
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>
@@ -185,4 +198,11 @@
                 </div>
             @endif
     </main>
+    <script>
+        function confirmSubmit(form) {
+            let status = form.querySelector('input[name="status"]').value;
+            let keterangan = form.querySelector('input[name="keterangan"]').value;
+            return confirm(`Apakah kamu yakin ingin mengisi absensi dengan status "${status}"?` + (keterangan ? `\nAlasan: ${keterangan}` : ''));
+        }
+    </script>
 @endsection

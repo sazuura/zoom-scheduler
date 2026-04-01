@@ -100,7 +100,7 @@
                                     <div class="action-buttons">
 
                                         {{-- Edit --}}
-                                        <a href="{{ route('admin.users.edit', $user->id_user) }}" class="btn-action info"
+                                        <a href="{{ route('admin.users.edit', $user->id_user) }}" class="btn-action edit"
                                             title="Edit User">
                                             <i class="bx bx-edit"></i>
                                         </a>

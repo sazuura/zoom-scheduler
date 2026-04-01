@@ -113,7 +113,7 @@
                             @foreach($selectedOperators as $opId)
                                 <div class="operator-item" style="display:flex; gap:10px; margin-bottom:8px;">
                                     <select name="id_user[]" style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
-                                        <option value="">-- Pilih Operator --</option>
+                                        <option value="" disabled selected>-- Pilih Operator --</option>
                                             @foreach($operators as $op)
                                                 <option value="{{ $op->id_user }}"{{ $opId == $op->id_user ? 'selected' : '' }}>
                                                     {{ $op->nama_user }}
@@ -135,26 +135,52 @@
                     <div class="mb-3">
                         <label>Peralatan yang Digunakan</label>
                         <div id="peralatan-wrapper">
-                            @foreach($jadwal->jadwalPeralatan as $alat)
+                            @forelse($jadwal->jadwalPeralatan as $alat)
                                 <div class="peralatan-item" style="display:flex; gap:10px; margin-bottom:8px;">
                                     <select name="peralatan[]" style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
-                                        <option value="">-- Pilih Peralatan --</option>
-                                            @foreach($peralatans as $p)
-                                                <option value="{{ $p->id_peralatan }}" {{ $p->id_peralatan == $alat->id_peralatan ? 'selected' : '' }}>
-                                                    {{ $p->nama_peralatan }} (stok: {{ $p->stok_tersedia }})
-                                                </option>
-                                            @endforeach
+                                        <option value="" disabled selected>-- Pilih Peralatan --</option>
+                                        @foreach($peralatans as $p)
+                                            <option value="{{ $p->id_peralatan }}"
+                                                data-stok="{{ $p->stok_tersedia }}"
+                                                {{ $p->id_peralatan == $alat->id_peralatan ? 'selected' : '' }}
+                                                {{ $p->stok_tersedia <= 0 ? 'disabled' : '' }}>
+                                                {{ $p->nama_peralatan }} (stok: {{ $p->stok_tersedia }})
+                                            </option>
+                                        @endforeach
                                     </select>
-                                    <input type="number" name="jumlah[]" value="{{ $alat->jumlah }}" min="1" style="width:100px; padding:8px; border-radius:6px; border:1px solid #ddd;">
-                                        <button type="button" class="remove-peralatan" style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
+                                    <input type="number" name="jumlah[]" value="{{ $alat->jumlah }}" min="1"
+                                        style="width:100px; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                    <button type="button" class="remove-peralatan"
+                                        style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
                                 </div>
-                            @endforeach
+                            @empty
+                                {{-- jika tidak ada peralatan --}}
+                                <div class="peralatan-item" style="display:flex; gap:10px; margin-bottom:8px;">
+                                    <select name="peralatan[]" style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                        <option value="" disabled selected>-- Pilih Peralatan --</option>
+                                        @foreach($peralatans as $p)
+                                            <option value="{{ $p->id_peralatan }}"
+                                                data-stok="{{ $p->stok_tersedia }}"
+                                                {{ $p->stok_tersedia <= 0 ? 'disabled' : '' }}>
+                                                {{ $p->nama_peralatan }} (stok: {{ $p->stok_tersedia }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <input type="number" name="jumlah[]" min="1"
+                                        style="width:100px; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                    <button type="button" class="remove-peralatan"
+                                        style="background:#e74c3c;color:white;border:none;border-radius:6px;padding:8px;">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </div>
+                            @endforelse
                         </div>
-                            <button type="button" id="add-peralatan" style="margin-top:8px; padding:6px 10px; background:#3C91E6; color:white; border:none; border-radius:6px;">
-                                + Tambah Peralatan
-                            </button>
+                        <button type="button" id="add-peralatan"
+                            style="margin-top:8px; padding:6px 10px; background:#3C91E6; color:white; border:none; border-radius:6px;">
+                            + Tambah Peralatan
+                        </button>
                     </div>
 
                     {{-- Tombol --}}
@@ -163,7 +189,7 @@
                             style="padding:8px 14px; background:#e0e0e0; border-radius:6px; text-decoration:none; color:#222;">
                             Batal
                         </a>
-                        <button type="submit" class="btn btn-primary"
+                        <button type="submit"
                             style="padding:8px 14px; background:#3C91E6; color:#fff; border:none; border-radius:6px;">
                             Update
                         </button>
@@ -173,8 +199,8 @@
         </div>
     </main>
     <script>
-        // Detail kecil untuk pengisian keterangan
         document.addEventListener("DOMContentLoaded", function () {
+            // PLATFORM NOTE
             const platformSelect = document.getElementById('platform');
             const note = document.getElementById('keterangan_note');
             const input = document.getElementById('keterangan');
@@ -184,13 +210,11 @@
                     note.textContent = "Masukkan lokasi rapat (Gedung, Ruangan, Lantai, dll).";
                     input.placeholder = "Contoh: Gedung A Lt.2 Ruang Rapat 1";
                     input.type = "text";
-                }
-                else if (value.includes('Online')) {
+                } else if (value.includes('Online')) {
                     note.textContent = "Masukkan link Zoom atau Google Meet.";
                     input.placeholder = "Contoh: https://zoom.us/j/xxxxxxx";
                     input.type = "url";
-                }
-                else {
+                } else {
                     note.textContent = "Pilih platform terlebih dahulu.";
                     input.placeholder = "";
                     input.type = "text";
@@ -198,38 +222,111 @@
             }
             platformSelect.addEventListener('change', updateNote);
             updateNote();
-        });
-        // Detail kecil untuk pengisian operator
-        const operatorWrapper = document.getElementById('operator-wrapper');
-        const addOperatorBtn = document.getElementById('add-operator');
-        addOperatorBtn.addEventListener('click', function () {
-            const item = document.querySelector('.operator-item').cloneNode(true);
-            item.querySelector('select').value = "";
-            operatorWrapper.appendChild(item);
+           
+            // OPERATOR FILTER
+            function updateOperatorOptions() {
+                let selected = [];
+                document.querySelectorAll("select[name='id_user[]']").forEach(sel => {
+                    if (sel.value) {
+                        selected.push(sel.value);
+                    }
+                });
+                document.querySelectorAll("select[name='id_user[]']").forEach(sel => {
+                    Array.from(sel.options).forEach(opt => {
+                        if (opt.value === "") return;
+                        if (selected.includes(opt.value) && sel.value !== opt.value) {
+                            opt.disabled = true;
+                        } else {
+                            opt.disabled = false;
+                        }
+                    });
+                });
+            }
+            
+            // PERALATAN FILTER
+            function updatePeralatanOptions() {
+                let selected = [];
+                document.querySelectorAll("select[name='peralatan[]']").forEach(sel => {
+                    if (sel.value) {
+                        selected.push(sel.value);
+                    }
+                });
+                document.querySelectorAll("select[name='peralatan[]']").forEach(sel => {
+                    Array.from(sel.options).forEach(opt => {
+                        if (opt.value === "") return;
+                        const stok = parseInt(opt.dataset.stok);
+                        // jika stok 0 tetap disabled
+                        if (stok <= 0) {
+                            opt.disabled = true;
+                            return;
+                        }
+                        // jika sudah dipilih di dropdown lain
+                        if (selected.includes(opt.value) && sel.value !== opt.value) {
+                            opt.disabled = true;
+                        } else {
+                            opt.disabled = false;
+                        }
+                    });
+                });
+            }
 
-        });
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.remove-operator')) {
-                if (document.querySelectorAll('.operator-item').length > 1) {
-                    e.target.closest('.operator-item').remove();
+            // TAMBAH PERALATAN     
+            const wrapper = document.getElementById('peralatan-wrapper');
+            const addBtn = document.getElementById('add-peralatan');
+            addBtn.addEventListener('click', function () {
+                const item = document.querySelector('.peralatan-item').cloneNode(true);
+                item.querySelector('select').value = "";
+                item.querySelector('input').value = "";
+                wrapper.appendChild(item);
+                updatePeralatanOptions();
+            });
+
+            // TAMBAH OPERATOR
+            const operatorWrapper = document.getElementById('operator-wrapper');
+            const addOperatorBtn = document.getElementById('add-operator');
+            addOperatorBtn.addEventListener('click', function () {
+                const item = document.querySelector('.operator-item').cloneNode(true);
+                item.querySelector('select').value = "";
+                operatorWrapper.appendChild(item);
+                updateOperatorOptions();
+            });
+            
+            // REMOVE ITEM
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.remove-peralatan')) {
+                    let items = document.querySelectorAll('.peralatan-item');
+                    if (items.length > 1) {
+                        e.target.closest('.peralatan-item').remove();
+                        updatePeralatanOptions();
+                    } else {
+                        let item = items[0];
+                        let select = item.querySelector('select');
+                        select.selectedIndex = 0;
+                        let input = item.querySelector('input[name="jumlah[]"]');
+                        input.value = '';
+                        updatePeralatanOptions();
+                    }
                 }
-            }
-        });
-        // Detail kecil untuk pengisian peralatan
-        const alatWrapper = document.getElementById('peralatan-wrapper');
-        const addAlatBtn = document.getElementById('add-peralatan');
-        addAlatBtn.addEventListener('click', function () {
-            const item = document.querySelector('.peralatan-item').cloneNode(true);
-            item.querySelector('select').value = "";
-            item.querySelector('input').value = "";
-            alatWrapper.appendChild(item);
-        });
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.remove-peralatan')) {
-                if (document.querySelectorAll('.peralatan-item').length > 1) {
-                    e.target.closest('.peralatan-item').remove();
+                if (e.target.closest('.remove-operator')) {
+                    if (document.querySelectorAll('.operator-item').length > 1) {
+                        e.target.closest('.operator-item').remove();
+                        updateOperatorOptions();
+                    }
                 }
-            }
-        });
+            });
+            
+            // SELECT CHANGE EVENT
+            document.addEventListener("change", function (e) {
+                if (e.target.name === "id_user[]") {
+                    updateOperatorOptions();
+                }
+                if (e.target.name === "peralatan[]") {
+                    updatePeralatanOptions();
+                }
+            });        
+               INIT
+            updateOperatorOptions();
+            updatePeralatanOptions();
+    });
     </script>
 @endsection

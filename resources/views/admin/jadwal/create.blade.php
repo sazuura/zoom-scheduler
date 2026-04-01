@@ -112,7 +112,9 @@
                                     style="flex:2; padding:8px; border-radius:6px; border:1px solid #ddd;">
                                     <option value="" disabled selected>-- Pilih Peralatan --</option>
                                     @foreach($peralatans as $alat)
-                                        <option value="{{ $alat->id_peralatan }}">
+                                        <option value="{{ $alat->id_peralatan }}"
+                                            data-stok="{{ $alat->stok_tersedia }}"
+                                            {{ $alat->stok_tersedia <= 0 ? 'disabled' : '' }}>
                                             {{ $alat->nama_peralatan }} (stok: {{ $alat->stok_tersedia }})
                                         </option>
                                     @endforeach
@@ -146,215 +148,126 @@
         </div>
     </main>
     <script>
-
         document.addEventListener("DOMContentLoaded", function () {
-
-            /* ===============================
-               PLATFORM NOTE
-            =============================== */
-
+            // PLATFORM NOTE
             const platformSelect = document.getElementById('platform');
             const note = document.getElementById('keterangan_note');
             const input = document.getElementById('keterangan');
-
             function updateNote() {
-
                 const value = platformSelect.value;
-
                 if (value.includes('Offline')) {
-
                     note.textContent = "Masukkan lokasi rapat (Gedung, Ruangan, Lantai, dll).";
                     input.placeholder = "Contoh: Gedung A Lt.2 Ruang Rapat 1";
                     input.type = "text";
-
                 } else if (value.includes('Online')) {
-
                     note.textContent = "Masukkan link Zoom atau Google Meet.";
                     input.placeholder = "Contoh: https://zoom.us/j/xxxxxxx";
                     input.type = "url";
-
                 } else {
-
                     note.textContent = "Pilih platform terlebih dahulu.";
                     input.placeholder = "";
                     input.type = "text";
-
                 }
-
             }
-
             platformSelect.addEventListener('change', updateNote);
             updateNote();
-
-
-            /* ===============================
-               OPERATOR FILTER
-            =============================== */
-
+           
+            // OPERATOR FILTER
             function updateOperatorOptions() {
-
                 let selected = [];
-
                 document.querySelectorAll("select[name='id_user[]']").forEach(sel => {
                     if (sel.value) {
                         selected.push(sel.value);
                     }
                 });
-
                 document.querySelectorAll("select[name='id_user[]']").forEach(sel => {
-
                     Array.from(sel.options).forEach(opt => {
-
-                        if (opt.value === "") {
-                            opt.disabled = false;
-                            return;
-                        }
-
+                        if (opt.value === "") return;
                         if (selected.includes(opt.value) && sel.value !== opt.value) {
                             opt.disabled = true;
                         } else {
                             opt.disabled = false;
                         }
-
                     });
-
                 });
-
             }
-
-
-            /* ===============================
-               PERALATAN FILTER
-            =============================== */
-
+            
+            // PERALATAN FILTER
             function updatePeralatanOptions() {
-
                 let selected = [];
-
                 document.querySelectorAll("select[name='peralatan[]']").forEach(sel => {
                     if (sel.value) {
                         selected.push(sel.value);
                     }
                 });
-
                 document.querySelectorAll("select[name='peralatan[]']").forEach(sel => {
-
                     Array.from(sel.options).forEach(opt => {
-
-                        if (opt.value === "") {
-                            opt.disabled = false;
+                        if (opt.value === "") return;
+                        const stok = parseInt(opt.dataset.stok);
+                        // jika stok 0 tetap disabled
+                        if (stok <= 0) {
+                            opt.disabled = true;
                             return;
                         }
-
+                        // jika sudah dipilih di dropdown lain
                         if (selected.includes(opt.value) && sel.value !== opt.value) {
                             opt.disabled = true;
                         } else {
                             opt.disabled = false;
                         }
-
                     });
-
                 });
-
             }
 
-
-            /* ===============================
-               TAMBAH PERALATAN
-            =============================== */
-
+            // TAMBAH PERALATAN     
             const wrapper = document.getElementById('peralatan-wrapper');
             const addBtn = document.getElementById('add-peralatan');
-
             addBtn.addEventListener('click', function () {
-
                 const item = document.querySelector('.peralatan-item').cloneNode(true);
-
                 item.querySelector('select').value = "";
                 item.querySelector('input').value = "";
-
                 wrapper.appendChild(item);
-
                 updatePeralatanOptions();
-
             });
 
-
-            /* ===============================
-               TAMBAH OPERATOR
-            =============================== */
-
+            // TAMBAH OPERATOR
             const operatorWrapper = document.getElementById('operator-wrapper');
             const addOperatorBtn = document.getElementById('add-operator');
-
             addOperatorBtn.addEventListener('click', function () {
-
                 const item = document.querySelector('.operator-item').cloneNode(true);
-
                 item.querySelector('select').value = "";
-
                 operatorWrapper.appendChild(item);
-
                 updateOperatorOptions();
-
             });
-
-
-            /* ===============================
-               REMOVE ITEM
-            =============================== */
-
+            
+            // REMOVE ITEM
             document.addEventListener('click', function (e) {
-
                 if (e.target.closest('.remove-peralatan')) {
-
                     if (document.querySelectorAll('.peralatan-item').length > 1) {
-
                         e.target.closest('.peralatan-item').remove();
                         updatePeralatanOptions();
-
                     }
-
                 }
-
                 if (e.target.closest('.remove-operator')) {
-
                     if (document.querySelectorAll('.operator-item').length > 1) {
-
                         e.target.closest('.operator-item').remove();
                         updateOperatorOptions();
-
                     }
-
                 }
-
             });
-
-
-            /* ===============================
-               SELECT CHANGE EVENT
-            =============================== */
-
+            
+            // SELECT CHANGE EVENT
             document.addEventListener("change", function (e) {
-
                 if (e.target.name === "id_user[]") {
                     updateOperatorOptions();
                 }
-
                 if (e.target.name === "peralatan[]") {
                     updatePeralatanOptions();
                 }
-
-            });
-
-
-            /* ===============================
+            });        
                INIT
-            =============================== */
-
             updateOperatorOptions();
             updatePeralatanOptions();
-
-        });
+    });
     </script>
 @endsection

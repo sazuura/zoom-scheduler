@@ -71,12 +71,13 @@ class OperatorController extends Controller
                 }
             }
         }
+        $hariini = Carbon::now('Asia/Jakarta')->toDateString();
         $jadwalHariIni = Absensi::with([
             'penjadwalan.jadwalPeralatan.peralatan',
             'dokumentasi'
         ])
             ->where('id_user', $userId)
-            ->whereDate('tanggal', today())
+            ->whereDate('tanggal', '>=', $hariini)
             ->orderByDesc('created_at')
             ->get();
         $absensiSaya = Absensi::with([
@@ -95,56 +96,47 @@ class OperatorController extends Controller
     public function absensiStore(Request $request)
     {
         $request->validate([
-            'id_penjadwalan' => 'required|exists:penjadwalan,id_penjadwalan',
+            'id_absensi' => 'required|exists:absensi,id_absensi',
             'status' => 'required|string',
             'keterangan' => 'nullable|string'
         ]);
 
-        $userId = auth()->user()->id_user;
-        $jadwalId = $request->id_penjadwalan;
-        $today = today()->toDateString();
-        $now = Carbon::now('Asia/Jakarta');
+        $absensi = Absensi::with('penjadwalan')->findOrFail($request->id_absensi);
+        $jadwal = $absensi->penjadwalan;
 
-        $jadwal = Penjadwalan::findOrFail($jadwalId);
+    $now = Carbon::now('Asia/Jakarta');
+    $start = $jadwal->startDateTime;
+    $end = $jadwal->endDateTime;
 
-        $start = $jadwal->startDateTime;
-        $end = $jadwal->endDateTime;
+    $today = $now->toDateString();
+    $hMinus1 = $start->copy()->subDay()->toDateString();
 
-        if (!$start || !$end) {
-            return back()->with('error', 'Data waktu jadwal tidak valid.');
+    // Status 'hadir' hanya untuk jadwal hari ini
+    if ($request->status == 'hadir') {
+        if ($today != $start->toDateString()) {
+            return back()->with('error', 'Hadir hanya bisa untuk jadwal hari ini.');
         }
-
-        if ($today !== $jadwal->tanggal->toDateString()) {
-            return back()->with('error', 'Anda hanya bisa absen pada tanggal jadwal.');
-        }
-
         if (!$now->between($start, $end)) {
-            return back()->with(
-                'error',
-                'Absensi hanya bisa pada jam '.$start->format('H:i').' - '.$end->format('H:i')
-            );
+            return back()->with('error', 'Hadir hanya bisa saat jadwal berlangsung ('.$start->format('H:i').' - '.$end->format('H:i').').');
         }
+    }
 
-        $exists = Absensi::where('id_user', $userId)
-            ->where('id_penjadwalan', $jadwalId)
-            ->whereDate('tanggal', $today)
-            ->exists();
-
-        if ($exists) {
-            return back()->with('error', 'Anda sudah absen untuk jadwal ini.');
+    // Status 'izin' atau 'sakit' hanya bisa H-1 atau lebih
+    if (in_array($request->status, ['izin', 'sakit'])) {
+        if ($today > $hMinus1) {
+            return back()->with('error', 'Izin / Sakit hanya bisa diajukan H-1 sebelum jadwal.');
         }
+    }
 
-        Absensi::create([
-            'id_user' => $userId,
-            'id_penjadwalan' => $jadwalId,
-            'tanggal' => $today,
+        // Update absensi
+        $absensi->update([
             'status' => $request->status,
             'keterangan' => $request->keterangan
         ]);
 
         return redirect()
             ->route('operator.absensi.index')
-            ->with('success', 'Absensi berhasil disimpan.');
+            ->with('success', 'Absensi berhasil diperbarui.');
     }
     public function absensiCancel($id)
     {

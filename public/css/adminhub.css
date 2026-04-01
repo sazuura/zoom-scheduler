@@ -417,6 +417,87 @@ form button{
     background:#ccc;
     cursor:not-allowed;
 }
+#switch-mode {
+  display: none;
+}
+
+.toggle {
+  width: 5px;
+  height: 5px;
+  background: #facc15;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.4s;
+}
+
+.icon {
+  font-size: 28px;
+  transition: transform 0.6s ease, opacity 0.3s;
+}
+
+/* Saat dark mode */
+#switch-mode:checked + .toggle {
+  background: #1e293b;
+}
+
+#switch-mode:checked + .toggle .icon {
+  transform: rotate(360deg);
+}
+
+
+
+/* BOOKMARK TAB */
+.bookmark-wrapper{
+    position: relative;
+}
+
+.bookmark-tabs{
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.tab-btn{
+    padding: 6px 16px;
+    font-size: 13px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #e5e7eb;
+    border-bottom: none;
+    background: #f1f5f9;
+    cursor: pointer;
+	font-family: var(--poppins);
+}
+
+.tab-btn.active{
+    background: #fff;
+    font-weight: 600;
+    
+}
+
+/* CARD FIX */
+.order{
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding-top: 20px;
+    border: 1px solid #eee;
+    overflow: visible !important;
+}
+
+.order .head{
+    padding: 10px 20px 0 20px;
+}
+
+.order table{
+    margin-top: 10px;
+}
+
 /* END CUSTOM */
 
 li {

@@ -43,33 +43,8 @@ class PeralatanController extends Controller
 
         return view('admin.peralatan.index', compact('peralatan'));
     }
-    public function create(Request $request)
+    public function create()
     {
-        $tanggal = $request->tanggal;
-        $mulai = $request->waktu_mulai;
-        $selesai = $request->waktu_selesai;
-        $operators = User::where('role', 'operator')
-            ->whereDoesntHave('penjadwalan', function ($q) use ($tanggal, $mulai, $selesai) {
-                $q->where('tanggal', $tanggal)
-                ->where(function ($query) use ($mulai, $selesai) {
-                    $query->whereBetween('waktu_mulai', [$mulai, $selesai])
-                            ->orWhereBetween('waktu_selesai', [$mulai, $selesai]);
-                });
-            })
-            ->get();
-        $peralatans = Peralatan::where('stok_tersedia', '>', 0)->get();
-        return view('admin.penjadwalan.create', compact('operators', 'peralatans'));
-    }
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nama_peralatan' => 'required|string|max:100',
-            'lokasi_penyimpanan' => 'required|string|max:255',
-            'stok' => 'required|integer|min:0',
-            'keterangan' => 'required|string|max:255',
-        ]);
-
-        
         $last = Peralatan::orderBy('id_peralatan', 'desc')->first();
         if ($last) {
             $lastNumber = (int) substr($last->id_peralatan, 3);
@@ -77,17 +52,30 @@ class PeralatanController extends Controller
         } else {
             $newNumber = 1;
         }
-
         $newId = 'PR-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
+        return view('admin.peralatan.create', compact('newId'));
+    }
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nama_peralatan' => 'required|string|max:100',
+            'lokasi_penyimpanan' => 'required|string|max:255',
+            'stok' => 'required|integer|min:0',
+        ]);     
+        $last = Peralatan::orderBy('id_peralatan', 'desc')->first();
+        if ($last) {
+            $lastNumber = (int) substr($last->id_peralatan, 3);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+        $newId = 'PR-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
         Peralatan::create([
             'id_peralatan' => $newId,
             'nama_peralatan' => $request->nama_peralatan,
             'lokasi_penyimpanan' => $request->lokasi_penyimpanan,
             'stok' => $request->stok,
-            'keterangan' => $request->keterangan,
         ]);
-
         return redirect()->route('admin.peralatan.index')->with('success', 'Peralatan berhasil ditambahkan!');
     }
     public function edit($id)

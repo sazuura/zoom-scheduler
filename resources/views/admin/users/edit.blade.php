@@ -83,7 +83,7 @@
                     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;">
                         <a href="{{ route('admin.users.index') }}" class="btn"
                             style="padding:8px 14px; background:#e0e0e0; border-radius:6px; text-decoration:none; color:#222;">Batal</a>
-                        <button type="submit" class="btn btn-primary"
+                        <button type="submit"
                             style="padding:8px 14px; background:#3C91E6; color:#fff; border:none; border-radius:6px;">
                             Update
                         </button>

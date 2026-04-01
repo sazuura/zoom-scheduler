@@ -89,10 +89,14 @@
                 <img src="{{ asset('img/amanah.png') }}" alt="Bandung Barat Amanah" style="height:40px; width:auto;">
                 <img src="{{ asset('img/jabaristimewa.png') }}" alt="Jabar Istimewa" style="height:40px; width:auto;">
                 <img src="{{ asset('img/berakhlak.png') }}" alt="ASN BerAKHLAK" style="height:40px; width:auto;">
-
-                <input type="checkbox" id="switch-mode" hidden>
-                <label for="switch-mode" class="switch-mode"></label>
-
+                <span></span>
+                <div class="theme-toggle">
+                    <input type="checkbox" id="switch-mode">
+                    <label for="switch-mode" class="toggle">
+                        <span class="icon">🌞</span>
+                    </label>
+                </div>
+                <span></span>
                 <a href="#" class="profile">
                     <span class="ms-2">Hallo, {{ Auth::user()->nama_user }}</span>
                 </a>
@@ -110,6 +114,18 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('js/adminhub.js') }}"></script>
+    <script>
+        const toggle = document.getElementById("switch-mode");
+        const icon = document.querySelector(".icon");
+
+        toggle.addEventListener("change", () => {
+            if (toggle.checked) {
+                icon.textContent = "🌙";
+            } else {
+                icon.textContent = "🌞";
+            }
+        });
+    </script>
     @yield('scripts')
 </body>
 

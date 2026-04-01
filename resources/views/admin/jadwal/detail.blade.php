@@ -84,10 +84,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($jadwal->jadwalPeralatan as $alat)
+                        @forelse($jadwal->jadwalPeralatan as $index => $alat)
                             <tr>
+                                <td>{{ $index + 1 }}</td>
                                 <td>{{ $alat->peralatan->nama_peralatan }}</td>
                                 <td>{{ $alat->jumlah }}</td>
+                                <td>
+                                    @if($alat->status_pemasangan == 'sudah_dipasang')
+                                        <span class="badge badge-active">Sudah Dipasang</span>
+                                    @else
+                                        <span class="badge badge-warning">Belum Dipasang</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>

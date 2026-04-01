@@ -32,19 +32,19 @@
         </ul>
         <div class="table-data"
             style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
-            <div class="order" style="padding:15px; border-radius:10px; background:#fff;">
+            <div class="order" style="padding:15px; border-radius:10px; ">
                 <div class="head">
                     <h3>Grafik Presensi</h3>
                 </div>
                 <canvas id="absensiChart" style="max-height:280px;"></canvas>
             </div>
-            <div class="order" style="padding:15px; border-radius:10px; background:#fff;">
+            <div class="order" style="padding:15px; border-radius:10px; ">
                 <div class="head">
                     <h3>Statistik Penjadwalan Operator</h3>
                 </div>
                 <canvas id="operatorChart" style="max-height:280px;"></canvas>
             </div>
-            <div class="order" style="padding:15px; border-radius:10px; background:#fff;">
+            <div class="order" style="padding:15px; border-radius:10px; ">
                 <div class="head">
                     <h3>Tren Presensi Harian</h3>
                 </div>
