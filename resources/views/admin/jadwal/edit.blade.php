@@ -19,14 +19,6 @@
                     <h3>Form Edit Jadwal</h3>
                 </div>
 
-                {{-- ALERT SECTION --}}
-                @if(session('error'))
-                    <div
-                        style="background:#fde2e2; border:1px solid #f5c2c2; padding:10px 15px; border-radius:8px; color:#b91c1c; margin-bottom:15px;">
-                        <strong>⚠️ Terjadi Kesalahan:</strong> {{ session('error') }}
-                    </div>
-                @endif
-
                 @if($errors->any())
                     <div
                         style="background:#fff3cd; border:1px solid #ffeeba; padding:10px 15px; border-radius:8px; color:#856404; margin-bottom:15px;">

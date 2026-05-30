@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="{{ asset('css/adminhub.css') }}">
 </head>
+
 <body>
 
     <section id="sidebar">
@@ -46,7 +48,7 @@
         <ul class="side-menu">
             <li>
                 <a href="{{ route('logout') }}" class="logout"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class='bx bxs-log-out-circle'></i>
                     <span class="text">Logout</span>
                 </a>
@@ -63,9 +65,9 @@
                 <i class='bx bx-menu'></i>
             </div>
             <div style="display:flex; align-items:center; gap:15px;">
-                <img src="{{ asset('img/amanah.png') }}"        alt="" style="height:40px;">
+                <img src="{{ asset('img/amanah.png') }}" alt="" style="height:40px;">
                 <img src="{{ asset('img/jabaristimewa.png') }}" alt="" style="height:40px;">
-                <img src="{{ asset('img/berakhlak.png') }}"     alt="" style="height:40px;">
+                <img src="{{ asset('img/berakhlak.png') }}" alt="" style="height:40px;">
                 <div class="theme-toggle">
                     <input type="checkbox" id="switch-mode">
                     <label for="switch-mode" class="toggle">
@@ -77,7 +79,10 @@
                 </a>
             </div>
         </nav>
+        <!-- Flash Notifications -->
+        <x-flash />
 
+        <!-- Main Content -->
         @yield('content')
     </section>
 
@@ -90,4 +95,5 @@
     </script>
     @yield('scripts')
 </body>
+
 </html>

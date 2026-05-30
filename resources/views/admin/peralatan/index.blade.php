@@ -11,11 +11,7 @@
                 <span class="text">Tambah Peralatan</span>
             </a>
         </div>
-        @if(session('success'))
-            <div class="alert alert-success" style="margin:10px 0; padding:10px; border-radius:6px;">
-                {{ session('success') }}
-            </div>
-        @endif
+
         <div class="toolbar">
             <form method="GET" action="{{ route('admin.peralatan.index') }}" class="toolbar-form">
                 <div class="search-box">

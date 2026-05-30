@@ -2,12 +2,7 @@
 @section('title', 'Data Users')
 @section('content')
     <main>
-        @if(session('success'))
-            <div id="toast" class="toast toast-success">
-                <i class="bx bx-check-circle"></i>
-                {{ session('success') }}
-            </div>
-        @endif
+
         @if(session('error'))
             <div id="toast" class="toast toast-error">
                 <i class="bx bx-error-circle"></i>

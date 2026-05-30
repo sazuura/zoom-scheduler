@@ -104,6 +104,9 @@
         </nav>
         <!-- End Navbar -->
 
+        <!-- Flash Notifications -->
+        <x-flash />
+
         <!-- Main Content -->
         @yield('content')
 

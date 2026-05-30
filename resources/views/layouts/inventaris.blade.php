@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,19 +15,22 @@
             gap: 1.25rem;
             padding: 1rem 0;
         }
+
         .peralatan-card {
             background: var(--light);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,.07);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .07);
             transition: transform .2s, box-shadow .2s;
             display: flex;
             flex-direction: column;
         }
+
         .peralatan-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0,0,0,.12);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
         }
+
         .card-img {
             width: 100%;
             height: 140px;
@@ -38,20 +42,65 @@
             font-size: 3rem;
             color: #bbb;
         }
-        .card-img img { width:100%; height:140px; object-fit:cover; }
-        .card-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: .4rem; }
-        .card-title { font-size: .95rem; font-weight: 600; margin: 0; }
-        .card-location { font-size: .78rem; color: #888; display: flex; align-items: center; gap: 4px; }
-        .card-stok { font-size: .82rem; display: flex; justify-content: space-between; margin-top: auto; padding-top: .5rem; }
+
+        .card-img img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .card-body {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: .4rem;
+        }
+
+        .card-title {
+            font-size: .95rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .card-location {
+            font-size: .78rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-stok {
+            font-size: .82rem;
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: .5rem;
+        }
+
         .stok-badge {
             font-size: .75rem;
             padding: 3px 10px;
             border-radius: 20px;
             font-weight: 500;
         }
-        .stok-badge.tersedia { background: #d4edda; color: #1a6b30; }
-        .stok-badge.habis    { background: #f8d7da; color: #842029; }
-        .stok-badge.minim    { background: #fff3cd; color: #856404; }
+
+        .stok-badge.tersedia {
+            background: #d4edda;
+            color: #1a6b30;
+        }
+
+        .stok-badge.habis {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .stok-badge.minim {
+            background: #fff3cd;
+            color: #856404;
+        }
+
         /* Search & filter toolbar */
         .inv-toolbar {
             display: flex;
@@ -60,9 +109,14 @@
             flex-wrap: wrap;
             margin-bottom: 1.25rem;
         }
-        .inv-toolbar .search-box { flex: 1; min-width: 200px; }
+
+        .inv-toolbar .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Sidebar -->
@@ -96,7 +150,7 @@
         <ul class="side-menu">
             <li>
                 <a href="{{ route('logout') }}" class="logout"
-                   onclick="event.preventDefault(); document.getElementById('logout-form-inv').submit();">
+                    onclick="event.preventDefault(); document.getElementById('logout-form-inv').submit();">
                     <i class='bx bxs-log-out-circle'></i>
                     <span class="text">Logout</span>
                 </a>
@@ -114,9 +168,9 @@
                 <i class='bx bx-menu'></i>
             </div>
             <div style="display:flex; align-items:center; gap:15px;">
-                <img src="{{ asset('img/amanah.png') }}"        alt="" style="height:40px;">
+                <img src="{{ asset('img/amanah.png') }}" alt="" style="height:40px;">
                 <img src="{{ asset('img/jabaristimewa.png') }}" alt="" style="height:40px;">
-                <img src="{{ asset('img/berakhlak.png') }}"     alt="" style="height:40px;">
+                <img src="{{ asset('img/berakhlak.png') }}" alt="" style="height:40px;">
                 <div class="theme-toggle">
                     <input type="checkbox" id="switch-mode">
                     <label for="switch-mode" class="toggle">
@@ -128,7 +182,10 @@
                 </a>
             </div>
         </nav>
+        <!-- Flash Notifications -->
+        <x-flash />
 
+        <!-- Main Content -->
         @yield('content')
     </section>
 
@@ -141,4 +198,5 @@
     </script>
     @yield('scripts')
 </body>
+
 </html>
