@@ -12,7 +12,7 @@ class UserController extends Controller
         if ($request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('nama_user', 'like', '%' . $request->search . '%')
-                ->orWhere('email', 'like', '%' . $request->search . '%');
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
             });
         }
         if ($request->status == 'active') {
@@ -21,8 +21,8 @@ class UserController extends Controller
             $query->where('status', 'inactive');
         }
         $users = $query->orderBy('nama_user')
-                    ->paginate(5)
-                    ->withQueryString();
+            ->paginate(5)
+            ->withQueryString();
         return view('admin.users.index', compact('users'));
     }
     public function create()
@@ -80,7 +80,7 @@ class UserController extends Controller
             'nohp' => $request->nohp,
             'email' => $request->email,
             'role' => $request->role,
-        ];   
+        ];
         if ($request->filled('password')) {
             $data['password'] = bcrypt($request->password);
         }

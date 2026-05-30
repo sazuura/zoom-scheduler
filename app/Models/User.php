@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -7,33 +9,58 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'users';
+    protected $table      = 'users';
     protected $primaryKey = 'id_user';
-    public $incrementing = false;
-    protected $keyType = 'string';
-    public $timestamps = false;
+    public $incrementing  = false;
+    protected $keyType    = 'string';
+    public $timestamps    = false;
+
     protected $fillable = [
         'id_user',
         'nama_user',
         'nohp',
-        'status',
         'email',
         'password',
-        'role',
+        'role',   // nilai valid: 'admin' | 'operator' | 'inventaris'
+        'status', // nilai valid: 'active' | 'inactive'
     ];
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    // ─── Relasi ──────────────────────────────────────────────────────────────
+
     public function penjadwalan()
     {
         return $this->hasMany(Penjadwalan::class, 'id_user', 'id_user');
     }
-    public function absensi() {
+
+    public function absensi()
+    {
         return $this->hasMany(Absensi::class, 'id_user', 'id_user');
     }
-    public function isActive()
+
+    // ─── Helper ──────────────────────────────────────────────────────────────
+
+    public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isOperator(): bool
+    {
+        return $this->role === 'operator';
+    }
+
+    public function isInventaris(): bool
+    {
+        return $this->role === 'inventaris';
     }
 }

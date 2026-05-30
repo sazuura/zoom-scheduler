@@ -8,9 +8,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    /**
+     * Mendukung satu atau beberapa role sekaligus.
+     *
+     * Contoh pemakaian di routes:
+     *   middleware('role:admin')
+     *   middleware('role:admin,inventaris')
+     */
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!auth()->check() || auth()->user()->role !== $role) {
+        if (! auth()->check()) {
+            abort(403, 'Akses ditolak');
+        }
+
+        $userRole = auth()->user()->role;
+
+        if (! in_array($userRole, $roles)) {
             abort(403, 'Akses ditolak');
         }
 

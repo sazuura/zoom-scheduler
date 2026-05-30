@@ -43,12 +43,12 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role === 'operator') {
-            return redirect()->route('operator.dashboard');
-        }
-        return redirect()->intended('/home'); // fallback
+        return match($user->role) {
+            'admin'      => redirect()->route('admin.dashboard'),
+            'operator'   => redirect()->route('operator.dashboard'),
+            'inventaris' => redirect()->route('inventaris.dashboard'),
+            default      => redirect('/'),
+        }; 
     }
 
     public function destroy(Request $request): RedirectResponse

@@ -7,6 +7,15 @@
                 <h1>Validasi Presensi</h1>
             </div>
         </div>
+
+        {{-- Flash Messages --}}
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
         <div class="toolbar">
             <form method="GET" action="{{ route('admin.absensi.index') }}" class="toolbar-form">
                 <div class="search-box">
@@ -16,30 +25,19 @@
                 <div class="filter-group">
                     <select name="status">
                         <option value="">Semua status</option>
-                        <option value="hadir" {{ request('status') == 'hadir' ? 'selected' : '' }}>
-                            Hadir
-                        </option>
-                        <option value="tidak_hadir" {{ request('status') == 'tidak_hadir' ? 'selected' : '' }}>
-                            Tidak Hadir
-                        </option>
-                        <option value="perlu_disetujui" {{ request('status') == 'perlu_disetujui' ? 'selected' : '' }}>
-                            Perlu Disetujui
-                        </option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>
-                            Pending
-                        </option>
+                        <option value="hadir"           {{ request('status') == 'hadir'           ? 'selected' : '' }}>Hadir</option>
+                        <option value="tidak_hadir"     {{ request('status') == 'tidak_hadir'     ? 'selected' : '' }}>Tidak Hadir</option>
+                        <option value="perlu_disetujui" {{ request('status') == 'perlu_disetujui' ? 'selected' : '' }}>Perlu Disetujui</option>
+                        <option value="pending"         {{ request('status') == 'pending'         ? 'selected' : '' }}>Pending</option>
                     </select>
-                    <button type="submit" class="btn-apply">
-                        Terapkan
-                    </button>
+                    <button type="submit" class="btn-apply">Terapkan</button>
                     @if(request()->hasAny(['search', 'status']))
-                        <a href="{{ route('admin.absensi.index') }}" class="btn-clear">
-                            Reset
-                        </a>
+                        <a href="{{ route('admin.absensi.index') }}" class="btn-clear">Reset</a>
                     @endif
                 </div>
             </form>
         </div>
+
         <div class="table-data">
             <div class="order">
                 <div class="head">
@@ -62,7 +60,8 @@
                             <tr>
                                 <td>{{ $absensi->firstItem() + $index }}</td>
                                 <td>{{ $absen->penjadwalan->judul_kegiatan ?? '-' }}</td>
-                                <td>{{ $absen->tanggal?->format('d/m/Y') ?? '-' }}
+                                <td>
+                                    {{ $absen->tanggal?->format('d/m/Y') ?? '-' }}
                                     @if($absen->penjadwalan?->waktu_mulai && $absen->penjadwalan?->waktu_selesai)
                                         ({{ \Carbon\Carbon::parse($absen->penjadwalan->waktu_mulai)->format('H:i') }}
                                         -
@@ -71,98 +70,90 @@
                                 </td>
                                 <td>{{ $absen->user->nama_user ?? '-' }}</td>
                                 <td>
-                                    @switch($absen->status)
-                                    @case('pending')
-                                        <span class="badge badge-warning">Pending</span>
-                                    @break
-                                    @case('hadir')
-                                        <span class="badge badge-active">Hadir</span>
-                                    @break
-                                    @case('izin')
-                                        <span class="badge badge-info">Izin</span>
-                                    @break
-                                    @case('sakit')
-                                        <span class="badge badge-purple">Sakit</span>
-                                    @break
-                                    @case('sakit_disetujui')
-                                        <span class="badge badge-purple">Sakit</span>
-                                    @break
-                                    @case('izin_disetujui')
-                                        <span class="badge badge-info">Izin</span>
-                                    @break
-                                    @case('alpha')
-                                        <span class="badge badge-danger">Alpha</span>
-                                    @break
-                                    @case('ditolak')
-                                        <span class="badge badge-danger">Ditolak</span>
-                                    @break
-                                    @default
-                                        <span class="badge">Unknown</span>
-                                    @endswitch
+                                    @php
+                                        $badgeMap = [
+                                            'pending'         => ['class' => 'badge-warning', 'label' => 'Pending'],
+                                            'hadir'           => ['class' => 'badge-active',  'label' => 'Hadir'],
+                                            'izin'            => ['class' => 'badge-info',    'label' => 'Izin (Menunggu)'],
+                                            'izin_disetujui'  => ['class' => 'badge-info',    'label' => 'Izin'],
+                                            'sakit'           => ['class' => 'badge-purple',  'label' => 'Sakit (Menunggu)'],
+                                            'sakit_disetujui' => ['class' => 'badge-purple',  'label' => 'Sakit'],
+                                            'alpha'           => ['class' => 'badge-danger',  'label' => 'Alpha'],
+                                            'ditolak'         => ['class' => 'badge-danger',  'label' => 'Ditolak'],
+                                        ];
+                                        $badge = $badgeMap[$absen->status] ?? ['class' => '', 'label' => $absen->status];
+                                    @endphp
+                                    <span class="badge {{ $badge['class'] }}">{{ $badge['label'] }}</span>
                                 </td>
                                 <td>{{ $absen->keterangan ?? '-' }}</td>
                                 <td>
                                     <div style="display:flex; gap:6px; align-items:center;">
-                                        {{-- VALIDASI IZIN / SAKIT --}}
-                                        @if($absen->status == 'izin' || $absen->status == 'sakit')
-                                            <form action="{{ route('admin.absensi.updateStatus', [$absen->id_absensi, $absen->status.'_disetujui']) }}" method="POST">
+
+                                        {{-- PERBAIKAN KEAMANAN:
+                                             Status sekarang dikirim lewat hidden input di POST body,
+                                             BUKAN lagi lewat URL parameter.
+                                             Ini mencegah manipulasi status dari luar. --}}
+
+                                        @if(in_array($absen->status, ['izin', 'sakit']))
+                                            {{-- Tombol Setujui --}}
+                                            <form action="{{ route('admin.absensi.updateStatus', $absen->id_absensi) }}" method="POST">
                                                 @csrf
-                                                <button class="btn-action success" title="Setujui">
+                                                <input type="hidden" name="status" value="{{ $absen->status }}_disetujui">
+                                                <button type="submit" class="btn-action success" title="Setujui">
                                                     <i class='bx bx-check'></i>
                                                 </button>
                                             </form>
-                                            <form action="{{ route('admin.absensi.updateStatus', [$absen->id_absensi,'ditolak']) }}" method="POST">
+                                            {{-- Tombol Tolak --}}
+                                            <form action="{{ route('admin.absensi.updateStatus', $absen->id_absensi) }}" method="POST">
                                                 @csrf
-                                                <button class="btn-action danger" title="Tolak">
+                                                <input type="hidden" name="status" value="ditolak">
+                                                <button type="submit" class="btn-action danger" title="Tolak">
                                                     <i class='bx bx-x'></i>
                                                 </button>
                                             </form>
                                         @endif
-                                        {{-- DETAIL HADIR --}}
+
+                                        {{-- Detail jika sudah hadir --}}
                                         @if($absen->status == 'hadir')
-                                            <a href="{{ route('admin.absensi.show',$absen->id_absensi) }}" class="btn-action info" title="Detail">
+                                            <a href="{{ route('admin.absensi.show', $absen->id_absensi) }}"
+                                               class="btn-action info" title="Lihat Detail">
                                                 <i class='bx bx-show'></i>
                                             </a>
                                         @endif
+
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7">Belum ada data absensi.</td>
+                                <td colspan="7" style="text-align:center; padding: 2rem; color: #999;">
+                                    Belum ada data presensi.
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
-                @if ($absensi->hasPages())
+
+                @if($absensi->hasPages())
                     <div class="pagination-clean">
-                        {{-- Previous --}}
-                        @if ($absensi->onFirstPage())
-                            <span class="page-btn disabled">
-                                <i class="bx bx-chevron-left"></i>
-                            </span>
+                        @if($absensi->onFirstPage())
+                            <span class="page-btn disabled"><i class="bx bx-chevron-left"></i></span>
                         @else
-                            <a href="{{ $absensi->previousPageUrl() }}" class="page-btn">
-                                <i class="bx bx-chevron-left"></i>
-                            </a>
+                            <a href="{{ $absensi->previousPageUrl() }}" class="page-btn"><i class="bx bx-chevron-left"></i></a>
                         @endif
-                        {{-- Page Numbers --}}
-                        @foreach ($absensi->getUrlRange(1, $absensi->lastPage()) as $page => $url)
-                            @if ($page == $absensi->currentPage())
+
+                        @foreach($absensi->getUrlRange(1, $absensi->lastPage()) as $page => $url)
+                            @if($page == $absensi->currentPage())
                                 <span class="page-btn active">{{ $page }}</span>
                             @else
                                 <a href="{{ $url }}" class="page-btn">{{ $page }}</a>
                             @endif
                         @endforeach
-                        {{-- Next --}}
-                        @if ($absensi->hasMorePages())
-                            <a href="{{ $absensi->nextPageUrl() }}" class="page-btn">
-                                <i class="bx bx-chevron-right"></i>
-                            </a>
+
+                        @if($absensi->hasMorePages())
+                            <a href="{{ $absensi->nextPageUrl() }}" class="page-btn"><i class="bx bx-chevron-right"></i></a>
                         @else
-                            <span class="page-btn disabled">
-                                <i class="bx bx-chevron-right"></i>
-                            </span>
+                            <span class="page-btn disabled"><i class="bx bx-chevron-right"></i></span>
                         @endif
                     </div>
                 @endif
