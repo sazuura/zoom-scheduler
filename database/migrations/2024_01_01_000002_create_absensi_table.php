@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,10 +7,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('absensi')) {
-            return;
-        }
-
         Schema::create('absensi', function (Blueprint $table) {
             $table->id('id_absensi');
             $table->string('id_penjadwalan', 10);
@@ -29,9 +24,14 @@ return new class extends Migration
             ])->default('pending');
             $table->string('keterangan', 255)->nullable();
             $table->boolean('validated')->default(false);
-
-            $table->foreign('id_penjadwalan')->references('id_penjadwalan')->on('penjadwalan')->cascadeOnDelete();
-            $table->foreign('id_user')->references('id_user')->on('users')->cascadeOnDelete();
+            $table->foreign('id_penjadwalan')
+                  ->references('id_penjadwalan')
+                  ->on('penjadwalan')
+                  ->cascadeOnDelete();
+            $table->foreign('id_user')
+                  ->references('id_user')
+                  ->on('users')
+                  ->cascadeOnDelete();
         });
     }
 

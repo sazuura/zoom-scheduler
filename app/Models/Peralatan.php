@@ -1,63 +1,60 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class Peralatan extends Model
 {
-    protected $table      = 'peralatan';
-    protected $primaryKey = 'id_peralatan';
-    public $incrementing  = false;
-    protected $keyType    = 'string';
-    public $timestamps    = false;
-
+    protected $table        = 'peralatan';
+    protected $primaryKey   = 'id_peralatan';
+    public    $incrementing = false;
+    protected $keyType      = 'string';
+    public    $timestamps   = false;
     protected $fillable = [
-        'id_peralatan',
+        'id_peralatan',   
+        'kode_barang',   
         'nama_peralatan',
+        'gedung',         
+        'lokasi_detail',  
         'stok',
-        'lokasi_penyimpanan',
         'rusak',
         'perbaikan',
         'keterangan',
+        'foto',
     ];
 
     public function jadwalPeralatan()
     {
-        return $this->hasMany(JadwalPeralatan::class, 'id_peralatan');
+        return $this->hasMany(JadwalPeralatan::class, 'id_peralatan', 'id_peralatan');
     }
 
-    /**
-     * Hitung jumlah yang sedang dipakai — hanya jadwal yang belum selesai (tanggal >= hari ini).
-     *
-     * SEBELUMNYA: menghitung SEMUA JadwalPeralatan termasuk jadwal lampau,
-     * sehingga stok tampak selalu berkurang meski jadwalnya sudah selesai.
-     */
-    public function getDipakaiAttribute(): int
+    public function peminjamanItems()
     {
-        return $this->jadwalPeralatan()
-            ->whereHas('penjadwalan', function ($query) {
-                $query->whereDate('tanggal', '>=', Carbon::today());
-            })
-            ->sum('jumlah');
+        return $this->hasMany(PeminjamanItem::class, 'id_peralatan', 'id_peralatan');
     }
 
-    /**
-     * Stok yang benar-benar tersedia untuk dipakai.
-     */
     public function getStokTersediaAttribute(): int
     {
-        $tersedia = $this->stok
-            - ($this->rusak ?? 0)
-            - ($this->perbaikan ?? 0)
-            - $this->dipakai;
-
-        return max($tersedia, 0);
+        return max(0, $this->stok - ($this->rusak ?? 0) - ($this->perbaikan ?? 0));
     }
-
-    public function getStatusAttribute(): string
+    public function getStatusLabelAttribute(): string
     {
-        return $this->stok_tersedia > 0 ? 'Tersedia' : 'Tidak Tersedia';
+        return match (true) {
+            $this->stok_tersedia <= 0 => 'Tidak Tersedia',
+            $this->stok_tersedia <= 2 => 'Hampir Habis',
+            default                   => 'Tersedia',
+        };
+    }
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match (true) {
+            $this->stok_tersedia <= 0 => 'badge-danger',
+            $this->stok_tersedia <= 2 => 'badge-warning',
+            default                   => 'badge-active',
+        };
+    }
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->foto ? Storage::url($this->foto) : null;
     }
 }
