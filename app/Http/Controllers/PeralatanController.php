@@ -1,129 +1,115 @@
 <?php
 namespace App\Http\Controllers;
+use App\Helpers\IdGenerator;
 use App\Models\Peralatan;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PeralatanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Peralatan::query();
-        if ($request->search) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_peralatan', 'like', "%$search%")
-                ->orWhere('lokasi_penyimpanan', 'like', "%$search%");
-            });
-        }
-
-        $peralatan = $query->get();
-        // Filter status (karena bukan kolom db)
-        if ($request->status == 'tersedia') {
-            $peralatan = $peralatan->filter(function ($item) {
-                return $item->stok_tersedia > 0;
-            });
-        }
-        if ($request->status == 'tidak-tersedia') {
-            $peralatan = $peralatan->filter(function ($item) {
-                return $item->stok_tersedia <= 0;
-            });
-        }
-
-        $peralatan = $peralatan->sortByDesc('stok_tersedia')->values();
-        // pagination manual karena status nya tidak masuk ke db 
-        $peralatan = new \Illuminate\Pagination\LengthAwarePaginator(
-            $peralatan->forPage(request()->page ?? 1, 5),
-            $peralatan->count(),
-            5,
-            request()->page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return view('admin.peralatan.index', compact('peralatan'));
+        $peralatan = Peralatan::query()
+            ->when($request->search, fn($q, $s) =>
+                $q->where('nama_peralatan', 'like', "%{$s}%")
+                  ->orWhere('kode_barang',  'like', "%{$s}%")
+                  ->orWhere('gedung',       'like', "%{$s}%")
+            )
+            ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
+            ->when($request->status, fn($q, $v) => match ($v) {
+                'tersedia'       => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) > 0'),
+                'tidak_tersedia' => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) <= 0'),
+                default          => $q,
+            })
+            ->orderBy('gedung')
+            ->orderBy('nama_peralatan')
+            ->paginate(10)
+            ->withQueryString();
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
+        return view('admin.peralatan.index', compact('peralatan', 'gedungList'));
     }
     public function create()
     {
-        $last = Peralatan::orderBy('id_peralatan', 'desc')->first();
-        if ($last) {
-            $lastNumber = (int) substr($last->id_peralatan, 3);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        $newId = 'PR-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-        return view('admin.peralatan.create', compact('newId'));
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
+        return view('admin.peralatan.create', compact('gedungList'));
     }
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
+            'kode_barang'    => 'nullable|string|max:50|unique:peralatan,kode_barang',
             'nama_peralatan' => 'required|string|max:100',
-            'lokasi_penyimpanan' => 'required|string|max:255',
-            'stok' => 'required|integer|min:0',
-        ]);     
-        $last = Peralatan::orderBy('id_peralatan', 'desc')->first();
-        if ($last) {
-            $lastNumber = (int) substr($last->id_peralatan, 3);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        $newId = 'PR-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-        Peralatan::create([
-            'id_peralatan' => $newId,
-            'nama_peralatan' => $request->nama_peralatan,
-            'lokasi_penyimpanan' => $request->lokasi_penyimpanan,
-            'stok' => $request->stok,
+            'gedung'         => 'required|string|max:100',
+            'lokasi_detail'  => 'nullable|string|max:255',
+            'stok'           => 'required|integer|min:0',
+            'keterangan'     => 'nullable|string|max:255',
+            'foto'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
-        return redirect()->route('admin.peralatan.index')->with('success', 'Peralatan berhasil ditambahkan!');
+        $data['id_peralatan'] = IdGenerator::next(Peralatan::class, 'id_peralatan', 'PR-');
+        $data['foto']         = $request->hasFile('foto')
+            ? $request->file('foto')->store('peralatan', 'public')
+            : null;
+        Peralatan::create($data);
+        return redirect()->route('admin.peralatan.index')
+            ->with('success', 'Peralatan berhasil ditambahkan.');
     }
-    public function edit($id)
+    public function edit(string $id)
+    {
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
+        return view('admin.peralatan.edit', [
+            'peralatan' => Peralatan::findOrFail($id),
+            'gedungList' => $gedungList,
+        ]);
+    }
+    public function update(Request $request, string $id)
     {
         $peralatan = Peralatan::findOrFail($id);
-        return view('admin.peralatan.edit', compact('peralatan'));
-    }
-    public function update(Request $request, $id)
-    {
-        $peralatan = Peralatan::findOrFail($id);
-        $dipakai = $peralatan->dipakai;
-        $request->validate([
+        $data = $request->validate([
+            'kode_barang'    => 'nullable|string|max:50|unique:peralatan,kode_barang,' . $id . ',id_peralatan',
             'nama_peralatan' => 'required|string|max:100',
-            'lokasi_penyimpanan' => 'required|string|max:255',
-            'stok' => 'required|integer|min:0',
-            'rusak' => 'nullable|integer|min:0',
-            'perbaikan' => 'nullable|integer|min:0',
-            'keterangan' => 'nullable|string|max:255',
+            'gedung'         => 'required|string|max:100',
+            'lokasi_detail'  => 'nullable|string|max:255',
+            'stok'           => 'required|integer|min:0',
+            'rusak'          => 'nullable|integer|min:0',
+            'perbaikan'      => 'nullable|integer|min:0',
+            'keterangan'     => 'nullable|string|max:255',
+            'foto'           => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
-        if ($request->stok < $dipakai) {
-            return back()->withErrors([
-                'stok' => 'Stok tidak boleh lebih kecil dari jumlah yang sedang digunakan (' . $dipakai . ').'
-            ])->withInput();
+        $rusak     = (int) ($data['rusak']     ?? 0);
+        $perbaikan = (int) ($data['perbaikan'] ?? 0);
+        if (($rusak + $perbaikan) > (int) $data['stok']) {
+            return back()->withInput()
+                ->withErrors(['rusak' => 'Jumlah rusak + perbaikan tidak boleh melebihi stok total.']);
         }
-        if (($request->rusak + $request->perbaikan + $dipakai) > $request->stok) {
-            return back()->withErrors([
-                'stok' => 'Jumlah rusak / sedang perbaikan tidak boleh melebihi stok.'
-            ])->withInput();
-        }
-        $peralatan->update([
-            'nama_peralatan' => $request->nama_peralatan,
-            'lokasi_penyimpanan' => $request->lokasi_penyimpanan,
-            'stok' => $request->stok,
-            'rusak' => $request->rusak,
-            'perbaikan' => $request->perbaikan,
-            'keterangan' => $request->keterangan,
-        ]);
+        $data['foto'] = $this->prosesUploadFoto($request, $peralatan);
+        $peralatan->update($data);
         return redirect()->route('admin.peralatan.index')
-            ->with('success', 'Peralatan berhasil diperbarui!');
+            ->with('success', 'Peralatan berhasil diperbarui.');
     }
-    public function destroy($id)
+    public function destroy(string $id)
     {
         $peralatan = Peralatan::findOrFail($id);
-        if ($peralatan->dipakai > 0) {
-            return back()->with('error', 'Peralatan tidak dapat dihapus karena sedang digunakan dalam jadwal.');
+        try {
+            if ($peralatan->foto) {
+                Storage::disk('public')->delete($peralatan->foto);
+            }
+            $peralatan->delete();
+        } catch (\Exception $e) {
+            return back()->with('error', 'Peralatan tidak dapat dihapus karena masih tercatat di jadwal atau peminjaman aktif.');
         }
-        $peralatan->delete();
-        return redirect()->route('admin.peralatan.index')
-            ->with('success', 'Peralatan berhasil dihapus!');
+        return back()->with('success', 'Peralatan berhasil dihapus.');
+    }
+    private function prosesUploadFoto(Request $request, Peralatan $peralatan): ?string
+    {
+        if ($request->boolean('hapus_foto') && $peralatan->foto) {
+            Storage::disk('public')->delete($peralatan->foto);
+            return null;
+        }
+        if ($request->hasFile('foto')) {
+            if ($peralatan->foto) {
+                Storage::disk('public')->delete($peralatan->foto);
+            }
+            return $request->file('foto')->store('peralatan', 'public');
+        }
+        return $peralatan->foto;
     }
 }

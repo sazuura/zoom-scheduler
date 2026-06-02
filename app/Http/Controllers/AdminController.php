@@ -1,175 +1,136 @@
 <?php
-
 namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Penjadwalan;
 use App\Models\Absensi;
-use App\Models\Peralatan;
 use App\Models\JadwalPeralatan;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\LaporanExport;
+use App\Models\Peralatan;
+use App\Models\Penjadwalan;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    // Daftar status yang boleh di-set — tidak boleh menerima nilai sembarangan dari URL
-    private const STATUS_DIIZINKAN = [
-        'hadir',
-        'izin_disetujui',
-        'sakit_disetujui',
-        'alpha',
-        'ditolak',
-    ];
-
     public function dashboard()
     {
-        $jumlahOperator    = User::where('role', 'operator')->where('status', 'active')->count();
-        $jumlahPenjadwalan = Penjadwalan::count();
-        $jumlahPeralatan   = Peralatan::count();
-
-        $statusList = ['hadir', 'izin_disetujui', 'sakit_disetujui', 'alpha'];
-
-        $absensi = Absensi::selectRaw('status, COUNT(*) as total')
+        $absensiStats = Absensi::selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
-
-        $statusCounts = collect($statusList)
-            ->mapWithKeys(fn($s) => [$s => $absensi[$s] ?? 0]);
-
-        $operatorData   = User::where('role', 'operator')->withCount('penjadwalan')->get();
-        $operatorLabels = $operatorData->pluck('nama_user');
-        $operatorCounts = $operatorData->pluck('penjadwalan_count');
-
-        $records = Absensi::selectRaw('tanggal, status, COUNT(*) as total')
+        $stats = [
+            'jumlahOperator'    => User::where('role', 'operator')->where('status', 'active')->count(),
+            'jumlahJadwal'      => Penjadwalan::count(),
+            'jumlahPeralatan'   => Peralatan::count(),
+            'totalHadir'        => $absensiStats[Absensi::STATUS_HADIR]           ?? 0,
+            'totalIzin'         => $absensiStats[Absensi::STATUS_IZIN_DISETUJUI]  ?? 0,
+            'totalSakit'        => $absensiStats[Absensi::STATUS_SAKIT_DISETUJUI] ?? 0,
+            'totalAlpha'        => $absensiStats[Absensi::STATUS_ALPHA]            ?? 0,
+        ];
+        $tren = Absensi::selectRaw('tanggal, status, COUNT(*) as total')
+            ->whereIn('status', [
+                Absensi::STATUS_HADIR,
+                Absensi::STATUS_IZIN_DISETUJUI,
+                Absensi::STATUS_SAKIT_DISETUJUI,
+                Absensi::STATUS_ALPHA,
+            ])
             ->groupBy('tanggal', 'status')
             ->orderBy('tanggal')
             ->get()
             ->groupBy('tanggal');
-
-        $tanggalLabels = [];
-        $chartData     = array_fill_keys($statusList, []);
-
-        foreach ($records as $tanggal => $items) {
-            $tanggalLabels[] = \Carbon\Carbon::parse($tanggal)->format('d/m');
-            $map = $items->pluck('total', 'status');
-            foreach ($statusList as $status) {
-                $chartData[$status][] = $map[$status] ?? 0;
-            }
+        $trenLabels = [];
+        $trenHadir  = $trenIzin = $trenSakit = $trenAlpha = [];
+        foreach ($tren as $tanggal => $rows) {
+            $trenLabels[] = \Carbon\Carbon::parse($tanggal)->format('d/m');
+            $map          = $rows->pluck('total', 'status');
+            $trenHadir[]  = $map[Absensi::STATUS_HADIR]           ?? 0;
+            $trenIzin[]   = $map[Absensi::STATUS_IZIN_DISETUJUI]  ?? 0;
+            $trenSakit[]  = $map[Absensi::STATUS_SAKIT_DISETUJUI] ?? 0;
+            $trenAlpha[]  = $map[Absensi::STATUS_ALPHA]            ?? 0;
         }
-
-        return view('admin.dashboard', [
-            'jumlahOperator'    => $jumlahOperator,
-            'jumlahPenjadwalan' => $jumlahPenjadwalan,
-            'jumlahPeralatan'   => $jumlahPeralatan,
-
-            'hadir' => $statusCounts['hadir'],
-            'izin'  => $statusCounts['izin_disetujui'],
-            'sakit' => $statusCounts['sakit_disetujui'],
-            'alpha' => $statusCounts['alpha'],
-
-            'operatorLabels' => $operatorLabels,
-            'operatorCounts' => $operatorCounts,
-            'operatorData'   => $operatorData,
-
-            'tanggalLabels' => $tanggalLabels,
-            'hadirData'     => $chartData['hadir'],
-            'izinData'      => $chartData['izin_disetujui'],
-            'sakitData'     => $chartData['sakit_disetujui'],
-            'alphaData'     => $chartData['alpha'],
-        ]);
+        $operatorChart = User::where('role', 'operator')
+            ->withCount('absensi')
+            ->orderByDesc('absensi_count')
+            ->get();
+        return view('admin.dashboard', array_merge($stats, compact(
+            'trenLabels', 'trenHadir', 'trenIzin', 'trenSakit', 'trenAlpha',
+            'operatorChart',
+        )));
     }
 
-    // index untuk daftar absensi
-    public function index(Request $request)
+    public function absensiIndex(Request $request)
     {
-        $query = Absensi::with(['penjadwalan', 'user']);
-
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('penjadwalan', fn($q2) => $q2->where('judul_kegiatan', 'like', "%$search%"))
-                  ->orWhereHas('user', fn($q2) => $q2->where('nama_user', 'like', "%$search%"));
-            });
-        }
-
-        if ($request->status) {
-            match ($request->status) {
-                'hadir'          => $query->where('status', 'hadir'),
-                'tidak_hadir'    => $query->whereIn('status', ['izin_disetujui', 'sakit_disetujui', 'alpha']),
-                'perlu_disetujui'=> $query->whereIn('status', ['izin', 'sakit']),
-                'pending'        => $query->whereIn('status', ['pending', 'ditolak']),
-                default          => null,
-            };
-        }
-
-        $absensi = $query->orderBy('tanggal', 'desc')->paginate(10)->withQueryString();
-
+        $absensi = Absensi::with(['user', 'penjadwalan'])
+            ->when($request->search, fn($q, $s) =>
+                $q->where(function ($q2) use ($s) {
+                    $q2->whereHas('user',        fn($u) => $u->where('nama_user',      'like', "%{$s}%"))
+                       ->orWhereHas('penjadwalan', fn($p) => $p->where('judul_kegiatan', 'like', "%{$s}%"));
+                })
+            )
+            ->when($request->status, fn($q, $status) => match ($status) {
+                'hadir'           => $q->where('status', Absensi::STATUS_HADIR),
+                'tidak_hadir'     => $q->whereIn('status', [Absensi::STATUS_IZIN_DISETUJUI, Absensi::STATUS_SAKIT_DISETUJUI, Absensi::STATUS_ALPHA]),
+                'perlu_disetujui' => $q->whereIn('status', [Absensi::STATUS_IZIN, Absensi::STATUS_SAKIT]),
+                'pending'         => $q->where('status', Absensi::STATUS_PENDING),
+                default           => $q,
+            })
+            ->orderByDesc('tanggal')
+            ->paginate(10)
+            ->withQueryString();
         return view('admin.absensi.index', compact('absensi'));
     }
 
-    /**
-     * Update status absensi.
-     * Status divalidasi dengan whitelist — tidak bisa dimanipulasi dari URL.
-     */
-    public function updateStatus(Request $request, $id)
+    public function absensiShow(string $id)
     {
-        $status = $request->input('status');
-
-        abort_if(! in_array($status, self::STATUS_DIIZINKAN), 422, 'Status tidak valid.');
-
-        $absen = Absensi::findOrFail($id);
-        $absen->update(['status' => $status]);
-
-        return redirect()
-            ->route('admin.absensi.index')
-            ->with('success', 'Status absensi berhasil diperbarui.');
+        $absensi = Absensi::with(['user', 'penjadwalan', 'dokumentasi'])->findOrFail($id);
+        return view('admin.absensi.show', compact('absensi'));
     }
 
-    public function show($id)
+    public function absensiUpdateStatus(Request $request, string $id)
     {
-        $absensi = Absensi::with(['user', 'dokumentasi', 'penjadwalan'])->findOrFail($id);
-        return view('admin.absensi.detail', compact('absensi'));
+        $request->validate([
+            'status' => 'required|in:hadir,izin_disetujui,sakit_disetujui,alpha,ditolak',
+        ]);
+        Absensi::findOrFail($id)->update([
+            'status'    => $request->status,
+            'validated' => true,
+        ]);
+        return back()->with('success', 'Status presensi berhasil diperbarui.');
     }
 
-    public function laporan(Request $request)
+    public function laporanIndex(Request $request)
     {
-        $query = Absensi::with(['user', 'penjadwalan']);
-
-        if ($request->start) {
-            $query->whereDate('tanggal', '>=', $request->start);
-        }
-        if ($request->end) {
-            $query->whereDate('tanggal', '<=', $request->end);
-        }
-        if ($request->operator) {
-            $query->where('id_user', $request->operator);
-        }
-
-        $absensi         = $query->orderBy('tanggal', 'desc')->get();
-        $jadwalPeralatan = JadwalPeralatan::with(['penjadwalan', 'peralatan'])->get();
-        $operators       = User::where('role', 'operator')->get();
-
+        $operators = User::where('role', 'operator')->orderBy('nama_user')->get();
+        $absensi = Absensi::with(['user', 'penjadwalan'])
+            ->when($request->start,    fn($q, $v) => $q->whereDate('tanggal', '>=', $v))
+            ->when($request->end,      fn($q, $v) => $q->whereDate('tanggal', '<=', $v))
+            ->when($request->operator, fn($q, $v) => $q->where('id_user', $v))
+            ->orderByDesc('tanggal')
+            ->get();
+        $jadwalPeralatan = JadwalPeralatan::with(['penjadwalan', 'peralatan'])
+            ->when($request->start, fn($q, $v) =>
+                $q->whereHas('penjadwalan', fn($p) => $p->whereDate('tanggal', '>=', $v))
+            )
+            ->when($request->end, fn($q, $v) =>
+                $q->whereHas('penjadwalan', fn($p) => $p->whereDate('tanggal', '<=', $v))
+            )
+            ->get();
         return view('admin.laporan.index', compact('absensi', 'operators', 'jadwalPeralatan'));
     }
 
-    public function exportPdf(Request $request)
+    public function laporanExportPdf(Request $request)
     {
-        $query = Absensi::with(['user', 'penjadwalan']);
-
-        if ($request->start)    $query->whereDate('tanggal', '>=', $request->start);
-        if ($request->end)      $query->whereDate('tanggal', '<=', $request->end);
-        if ($request->operator) $query->where('id_user', $request->operator);
-
-        $absensi = $query->orderBy('tanggal', 'desc')->get();
-        $pdf     = Pdf::loadView('admin.laporan.pdf', compact('absensi'));
-
-        return $pdf->download('laporan-penjadwalan.pdf');
+        $absensi = Absensi::with(['user', 'penjadwalan'])
+            ->when($request->start,    fn($q, $v) => $q->whereDate('tanggal', '>=', $v))
+            ->when($request->end,      fn($q, $v) => $q->whereDate('tanggal', '<=', $v))
+            ->when($request->operator, fn($q, $v) => $q->where('id_user', $v))
+            ->orderByDesc('tanggal')
+            ->get();
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan.pdf', compact('absensi'));
+        return $pdf->download('laporan-presensi.pdf');
     }
 
-    public function exportExcel(Request $request)
+    public function laporanExportExcel(Request $request)
     {
-        return Excel::download(new LaporanExport($request), 'laporan-penjadwalan.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\LaporanExport($request),
+            'laporan-presensi.xlsx'
+        );
     }
 }

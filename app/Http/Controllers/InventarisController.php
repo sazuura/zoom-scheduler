@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\Peralatan;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
@@ -10,59 +8,58 @@ class InventarisController extends Controller
 {
     public function dashboard()
     {
-        $totalPeralatan  = Peralatan::count();
-        $totalTersedia   = Peralatan::get()->filter(fn($p) => $p->stok_tersedia > 0)->count();
-        $totalHabis      = $totalPeralatan - $totalTersedia;
-        $totalRusak      = Peralatan::sum('rusak');
+        $gedung = auth()->user()->gedung;
+        $totalPeralatan = Peralatan::where('gedung', $gedung)->count();
+        $totalTersedia  = Peralatan::where('gedung', $gedung)
+            ->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) > 0')
+            ->count();
+        $totalRusak     = Peralatan::where('gedung', $gedung)->sum('rusak');
 
-        $peralatanKritis = Peralatan::get()
-            ->filter(fn($p) => $p->stok_tersedia > 0 && $p->stok_tersedia <= 2)
-            ->sortBy('stok_tersedia')
-            ->take(5);
+        $peralatanKritis = Peralatan::where('gedung', $gedung)
+            ->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) BETWEEN 1 AND 2')
+            ->orderByRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) ASC')
+            ->take(5)
+            ->get();
 
-        // Sekarang sudah real — bukan placeholder
-        $peminjamanMenunggu = Peminjaman::with(['user', 'peralatan'])
+        $peminjamanMenunggu = Peminjaman::with(['user', 'items.peralatan'])
             ->where('status', 'diajukan')
+            ->whereHas('items.peralatan', fn($q) => $q->where('gedung', $gedung))
             ->orderBy('created_at')
             ->take(5)
             ->get();
 
-        $totalMenunggu = Peminjaman::where('status', 'diajukan')->count();
+        $totalMenunggu = Peminjaman::where('status', 'diajukan')
+            ->whereHas('items.peralatan', fn($q) => $q->where('gedung', $gedung))
+            ->count();
 
         return view('inventaris.dashboard', compact(
+            'gedung',
             'totalPeralatan',
             'totalTersedia',
-            'totalHabis',
             'totalRusak',
             'peralatanKritis',
             'peminjamanMenunggu',
-            'totalMenunggu'
+            'totalMenunggu',
         ));
     }
 
     public function peralatanIndex(Request $request)
     {
-        $query = Peralatan::query();
-
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_peralatan', 'like', "%$search%")
-                  ->orWhere('lokasi_penyimpanan', 'like', "%$search%");
-            });
-        }
-
-        $semua = $query->get();
-
-        $peralatan = match ($request->status) {
-            'tersedia'       => $semua->filter(fn($p) => $p->stok_tersedia > 0),
-            'tidak_tersedia' => $semua->filter(fn($p) => $p->stok_tersedia <= 0),
-            'kritis'         => $semua->filter(fn($p) => $p->stok_tersedia > 0 && $p->stok_tersedia <= 2),
-            default          => $semua,
-        };
-
-        $peralatan = $peralatan->sortByDesc('stok_tersedia')->values();
-
-        return view('inventaris.peralatan.index', compact('peralatan'));
+        $gedung = auth()->user()->gedung;
+        $peralatan = Peralatan::where('gedung', $gedung)
+            ->when($request->search, fn($q, $s) =>
+                $q->where('nama_peralatan', 'like', "%{$s}%")
+                  ->orWhere('kode_barang',  'like', "%{$s}%")
+            )
+            ->when($request->status, fn($q, $v) => match ($v) {
+                'tersedia'       => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) > 0'),
+                'tidak_tersedia' => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) <= 0'),
+                'kritis'         => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) BETWEEN 1 AND 2'),
+                default          => $q,
+            })
+            ->orderBy('nama_peralatan')
+            ->paginate(10)
+            ->withQueryString();
+        return view('inventaris.peralatan.index', compact('peralatan', 'gedung'));
     }
 }
