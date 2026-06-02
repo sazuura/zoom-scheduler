@@ -35,4 +35,8 @@ return [
     'sitekey' => env('NOCAPTCHA_SITEKEY'),
     'secret' => env('NOCAPTCHA_SECRET'),
     ],
+
+    'fonnte' => [
+    'token' => env('FONNTE_TOKEN', ''),
+    ],
 ];
