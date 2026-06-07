@@ -60,6 +60,7 @@
     </section>
 
     <section id="content">
+        <div id="sidebar-overlay" onclick="closeSidebar()"></div>
         <nav style="display:flex; align-items:center; justify-content:space-between;">
             <div style="display:flex; align-items:center;">
                 <i class='bx bx-menu'></i>

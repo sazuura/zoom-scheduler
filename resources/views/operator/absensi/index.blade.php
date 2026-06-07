@@ -1,208 +1,215 @@
-@extends('layouts.operator')
+@extends('layouts.app')
 @section('title', 'Presensi Saya')
+@section('sidebar-menu') <x-sidebar-operator /> @endsection
+
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Presensi Saya</h1>
-            </div>
-        </div>
-        {{-- Absen Hari Ini --}}
-        <div class="table-data">
-            <div class="order">
-                <div class="head">
-                    <h3>Jadwal Hari Ini</h3>
-                </div>
-                @if($jadwalHariIni->isEmpty())
-                    <div style="background:#fff; padding:12px; border-radius:8px;">
-                        Tidak ada jadwal untuk hari ini.
-                    </div>
-                @else
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Judul Kegiatan</th>
-                                <th>Tanggal</th>
-                                <th>Waktu</th>
-                                <th>Status</th>
-                                <th>Keterangan</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $now = \Carbon\Carbon::now('Asia/Jakarta');
-                                $today = $now->toDateString();
-                            @endphp
-                            @foreach($jadwalHariIni as $jadwal)
-                                @php
-                                    $start = $jadwal->penjadwalan->startDateTime ?? null;
-                                    $end = $jadwal->penjadwalan->endDateTime ?? null;
-                                    $inTime = $start && $end ? $now->between($start, $end) : false;
-                                    $hMinus1 = $start ? $start->copy()->subDay()->toDateString() : null;
-                                    $canHadir = $start && $today == $start->toDateString() && $inTime;
-                                    $canIzinSakit = $start && $today <= $hMinus1;
-                                    $canSubmit = $jadwal->status === 'pending' && ($canHadir || $canIzinSakit);
-                                @endphp
-                                <tr>
-                                    <td>{{ $jadwal->penjadwalan->judul_kegiatan }}</td>
-                                    <td>{{ $start ? $start->format('d/m/Y') : '-' }}</td>
-                                    <td>{{ $start ? $start->format('H:i') : '-' }} - {{ $end ? $end->format('H:i') : '-' }}</td>
+<main>
+    <div class="head-title">
+        <div class="left"><h1>Presensi Saya</h1></div>
+    </div>
 
-                                    @if($canSubmit)
-                                        <td>
-                                            <select name="status" id="status-{{ $jadwal->id_absensi }}"class="absensi-select" required>
-                                                @if($canHadir)
-                                                    <option value="hadir">Hadir</option>
-                                                @endif
-                                                @if($canIzinSakit)
-                                                    <option value="izin">Izin</option>
-                                                    <option value="sakit">Sakit</option>
-                                                @endif
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input type="text" name="keterangan" class="absensi-input" placeholder="Alasan jika izin / sakit">
-                                        </td>
-                                        <td>
-                                            <form action="{{ route('operator.absensi.store') }}" method="POST" onsubmit="return confirmSubmit(this)">
-                                                @csrf
-                                                <input type="hidden" name="id_absensi" value="{{ $jadwal->id_absensi }}">
-                                                <input type="hidden" name="status" id="hidden-status-{{ $jadwal->id_absensi }}">
-                                                <input type="hidden" name="keterangan" id="hidden-keterangan-{{ $jadwal->id_absensi }}">
-                                                <button type="submit" class="absensi-btn" onclick="
-                                                    document.getElementById('hidden-status-{{ $jadwal->id_absensi }}').value = document.getElementById('status-{{ $jadwal->id_absensi }}').value;
-                                                    document.getElementById('hidden-keterangan-{{ $jadwal->id_absensi }}').value = document.getElementById('keterangan-{{ $jadwal->id_absensi }}').value;
-                                                ">Kirim</button>
-                                            </form>
-                                        </td>
-                                    @else
-                                        <td></td>
-                                        @if ($jadwal->status != 'alpha')
-                                            <td colspan="3"><span class="text-muted">Sudah absen ({{ ucfirst($jadwal->status) }})</span></td>
-                                        @else
-                                            <td colspan="3"><span class="text-muted">Belum absen ({{ ucfirst($jadwal->status) }})</span></td>
-                                        @endif                                       
-                                    @endif
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+    {{-- Jadwal aktif / mendatang --}}
+    @forelse($jadwalAktif as $a)
+    @php
+        $jadwal = $a->penjadwalan;
+        $now    = \Carbon\Carbon::now('Asia/Jakarta');
+        $start  = $jadwal->startDateTime;
+        $end    = $jadwal->endDateTime;
+        $sedangBerlangsung = $start && $end && $now->between($start, $end);
+        $hariIni = $start && $now->toDateString() === $start->toDateString();
+    @endphp
+
+    <div class="form-card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <div>
+                <div style="font-size:16px;font-weight:600;color:var(--dark);">{{ $jadwal->judul_kegiatan }}</div>
+                <div style="font-size:13px;color:var(--dark-grey);margin-top:4px;">
+                    {{ $jadwal->tanggal->translatedFormat('l, d F Y') }}
+                    · {{ \Carbon\Carbon::parse($jadwal->waktu_mulai)->format('H:i') }}
+                    - {{ \Carbon\Carbon::parse($jadwal->waktu_selesai)->format('H:i') }} WIB
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                @if($sedangBerlangsung)
+                    <span class="badge badge-active" style="animation:pulse 1.5s infinite;">
+                        <i class="bx bx-radio-circle-marked"></i> Sedang Berlangsung
+                    </span>
+                @elseif($hariIni)
+                    <span class="badge badge-warning"><i class="bx bx-time"></i> Hari Ini</span>
                 @endif
+                <span class="badge {{ $a->badge['class'] }}">{{ $a->badge['label'] }}</span>
             </div>
         </div>
 
-        {{-- Riwayat Absensi --}}
-        <div class="table-data" style="margin-top:20px;">
-            <div class="order">
-                <div class="head">
-                    <h3>Riwayat Presensi</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;font-size:13px;">
+            <div>
+                <span style="color:var(--dark-grey);">Platform</span>
+                <div style="font-weight:500;margin-top:2px;">{{ $jadwal->platform }}</div>
+            </div>
+            <div>
+                <span style="color:var(--dark-grey);">Keterangan / Link</span>
+                <div style="font-weight:500;margin-top:2px;">{{ $jadwal->keterangan ?? '-' }}</div>
+            </div>
+        </div>
+
+        {{-- Peralatan yang harus dipasang --}}
+        @if($jadwal->jadwalPeralatan->count())
+        <div style="margin-bottom:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--dark);margin-bottom:8px;">
+                <i class="bx bxs-wrench" style="color:var(--blue);"></i> Peralatan yang Harus Dipasang
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                @foreach($jadwal->jadwalPeralatan as $jp)
+                <div style="background:var(--grey);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;">
+                    <span style="font-weight:500;">{{ $jp->peralatan->nama_peralatan }}</span>
+                    <span style="color:var(--dark-grey);">x{{ $jp->jumlah }}</span>
+                    <span style="color:var(--dark-grey);">·</span>
+                    <span style="color:var(--dark-grey);font-size:12px;">{{ $jp->peralatan->gedung }}</span>
+                    @if($jp->sudahDipasang())
+                        <span class="badge badge-active" style="font-size:11px;"><i class="bx bx-check"></i> Terpasang</span>
+                    @else
+                        <form action="{{ route('operator.peralatan.konfirmasi', $jp->id_jadwal_alat) }}" method="POST" style="display:inline;">
+                            @csrf @method('PATCH')
+                            <button type="submit" class="toolbar-btn primary" style="height:26px;padding:0 10px;font-size:11px;"
+                                onclick="return confirm('Konfirmasi peralatan {{ $jp->peralatan->nama_peralatan }} sudah dipasang?')">
+                                <i class="bx bx-check"></i> Konfirmasi
+                            </button>
+                        </form>
+                    @endif
                 </div>
-                <table>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Form isi presensi --}}
+        @if(!$a->isFinal())
+        <div style="border-top:1px solid var(--grey);padding-top:14px;">
+            <div style="font-size:13px;font-weight:600;color:var(--dark);margin-bottom:10px;">
+                <i class="bx bx-edit" style="color:var(--blue);"></i> Isi Presensi
+            </div>
+            <form action="{{ route('operator.absensi.store') }}" method="POST"
+                  style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                @csrf
+                <input type="hidden" name="id_absensi" value="{{ $a->id_absensi }}">
+                <select name="status" class="toolbar-select" style="min-width:130px;">
+                    <option value="" disabled {{ $a->isPending()?'selected':'' }}>-- Pilih Status --</option>
+                    <option value="hadir" {{ $a->isHadir()?'selected':'' }}
+                        {{ !$sedangBerlangsung ? 'disabled' : '' }}>
+                        Hadir {{ !$sedangBerlangsung ? '(hanya saat berlangsung)' : '' }}
+                    </option>
+                    <option value="izin"  {{ $a->status=='izin'?'selected':'' }}
+                        {{ $hariIni ? 'disabled' : '' }}>
+                        Izin {{ $hariIni ? '(hanya H-1)' : '' }}
+                    </option>
+                    <option value="sakit" {{ $a->status=='sakit'?'selected':'' }}
+                        {{ $hariIni ? 'disabled' : '' }}>
+                        Sakit {{ $hariIni ? '(hanya H-1)' : '' }}
+                    </option>
+                </select>
+                <input type="text" name="keterangan" class="toolbar-select"
+                    value="{{ $a->keterangan }}" placeholder="Keterangan (opsional)"
+                    style="flex:1;min-width:200px;">
+                <button type="submit" class="toolbar-btn primary">
+                    <i class="bx bx-save"></i> Simpan
+                </button>
+            </form>
+            <small style="color:var(--dark-grey);display:block;margin-top:6px;">
+                Hadir: saat jadwal berlangsung · Izin/Sakit: maksimal H-1 sebelum jadwal
+            </small>
+        </div>
+        @else
+        <div style="border-top:1px solid var(--grey);padding-top:12px;font-size:13px;color:var(--dark-grey);">
+            <i class="bx bx-lock-alt"></i> Presensi sudah divalidasi, tidak dapat diubah.
+        </div>
+        @endif
+    </div>
+    @empty
+    <div class="form-card" style="text-align:center;padding:40px;color:var(--dark-grey);">
+        <i class="bx bx-calendar-check" style="font-size:48px;display:block;margin-bottom:12px;color:var(--grey);"></i>
+        <p style="font-size:15px;">Tidak ada jadwal aktif atau mendatang.</p>
+        <a href="{{ route('operator.jadwal.index') }}" class="toolbar-btn primary" style="margin-top:14px;display:inline-flex;">
+            Lihat Semua Jadwal
+        </a>
+    </div>
+    @endforelse
+
+    {{-- Riwayat presensi --}}
+    <div style="margin-top:20px;">
+        <div class="data-table-wrap">
+            <div class="data-table-head">
+                <h3>Riwayat Presensi</h3>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Jadwal</th>
-                            <th>Waktu</th>
+                            <th>#</th>
+                            <th class="sortable">Kegiatan <span class="sort-icon">⇅</span></th>
+                            <th class="hide-mobile sortable">Tanggal <span class="sort-icon">⇅</span></th>
                             <th>Status</th>
-                            <th>Keterangan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($absensiSaya as $absen)
-                            @php
-                                $start = $absen->penjadwalan ? $absen->penjadwalan->startDateTime : null;
-                                $end = $absen->penjadwalan ? $absen->penjadwalan->endDateTime : null;
-                            @endphp
-                            <tr>
-                                <td>{{ $absen->tanggal ? $absen->tanggal->format('d/m/Y') : '-' }}</td>
-                                <td>{{ $absen->penjadwalan->judul_kegiatan ?? '-' }}</td>
-                                <td>
-                                    @if($start && $end)
-                                        {{ $start->format('H:i') }} - {{ $end->format('H:i') }}
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td>
-                                    @switch($absen->status)
-                                    @case('pending')
-                                        <span class="badge badge-warning">Pending</span>
-                                    @break
-                                    @case('hadir')
-                                        <span class="badge badge-active">Hadir</span>
-                                    @break
-                                    @case('izin')
-                                        <span class="badge badge-info">Izin</span>
-                                    @break
-                                    @case('sakit')
-                                        <span class="badge badge-purple">Sakit</span>
-                                    @break
-                                    @case('sakit_disetujui')
-                                        <span class="badge badge-purple">Sakit</span>
-                                    @break
-                                    @case('izin_disetujui')
-                                        <span class="badge badge-info">Izin</span>
-                                    @break
-                                    @case('alpha')
-                                        <span class="badge badge-danger">Alpha</span>
-                                    @break
-                                    @case('ditolak')
-                                        <span class="badge badge-danger">Ditolak</span>
-                                    @break
-                                    @default
-                                        <span class="badge">Unknown</span>
-                                    @endswitch
-                                </td>
-                                <td>{{ $absen->keterangan ?? '-' }}</td>
-                            </tr>
+                        @forelse($riwayat as $index => $r)
+                        @php $uid = 'rw-'.$r->id_absensi; @endphp
+                        <tr class="accordion-row" data-target="{{ $uid }}">
+                            <td>{{ $riwayat->firstItem() + $index }}</td>
+                            <td style="font-weight:500;">{{ $r->penjadwalan->judul_kegiatan }}</td>
+                            <td class="hide-mobile">{{ $r->tanggal->format('d/m/Y') }}</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span class="badge {{ $r->badge['class'] }}">{{ $r->badge['label'] }}</span>
+                                    <i class="bx bx-chevron-down accordion-chevron"></i>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="accordion-detail" id="{{ $uid }}">
+                            <td colspan="4">
+                                <div class="accordion-detail-inner">
+                                    <div class="detail-item"><label>Tanggal</label><p>{{ $r->tanggal->translatedFormat('l, d F Y') }}</p></div>
+                                    <div class="detail-item"><label>Platform</label><p>{{ $r->penjadwalan->platform }}</p></div>
+                                    <div class="detail-item"><label>Keterangan</label><p>{{ $r->keterangan ?? '-' }}</p></div>
+                                    <div class="detail-item"><label>Divalidasi</label><p>{{ $r->validated ? 'Ya' : 'Belum' }}</p></div>
+                                </div>
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="6">Belum ada data absensi.</td>
-                            </tr>
+                        <tr>
+                            <td colspan="4" style="text-align:center;padding:30px;color:var(--dark-grey);">Belum ada riwayat</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-        </div>
-            @if ($absensiSaya->hasPages())
-                <div class="pagination-clean">
-                    {{-- Previous --}}
-                    @if ($absensiSaya->onFirstPage())
-                        <span class="page-btn disabled">
-                            <i class="bx bx-chevron-left"></i>
-                        </span>
+            <div class="pagination-wrap">
+                <span>{{ $riwayat->total() }} total presensi</span>
+                <div class="pagination-links">
+                    @if($riwayat->onFirstPage())
+                        <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
                     @else
-                        <a href="{{ $absensiSaya->previousPageUrl() }}" class="page-btn">
-                            <i class="bx bx-chevron-left"></i>
-                        </a>
+                        <a href="{{ $riwayat->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
                     @endif
-                    {{-- Page Numbers --}}
-                    @foreach ($absensiSaya->getUrlRange(1, $absensiSaya->lastPage()) as $page => $url)
-                        @if ($page == $absensiSaya->currentPage())
-                            <span class="page-btn active">{{ $page }}</span>
-                        @else
-                            <a href="{{ $url }}" class="page-btn">{{ $page }}</a>
-                        @endif
+                    @foreach(range(1, $riwayat->lastPage()) as $p)
+                        <a href="{{ $riwayat->url($p) }}" class="page-link {{ $riwayat->currentPage()==$p?'active':'' }}">{{ $p }}</a>
                     @endforeach
-                    {{-- Next --}}
-                    @if ($absensiSaya->hasMorePages())
-                        <a href="{{ $absensiSaya->nextPageUrl() }}" class="page-btn">
-                            <i class="bx bx-chevron-right"></i>
-                        </a>
+                    @if($riwayat->hasMorePages())
+                        <a href="{{ $riwayat->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
                     @else
-                        <span class="page-btn disabled">
-                            <i class="bx bx-chevron-right"></i>
-                        </span>
+                        <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
                     @endif
                 </div>
-            @endif
-    </main>
-    <script>
-        function confirmSubmit(form) {
-            let status = form.querySelector('input[name="status"]').value;
-            let keterangan = form.querySelector('input[name="keterangan"]').value;
-            return confirm(`Apakah kamu yakin ingin mengisi absensi dengan status "${status}"?` + (keterangan ? `\nAlasan: ${keterangan}` : ''));
-        }
-    </script>
+            </div>
+        </div>
+    </div>
+</main>
 @endsection
+
+@push('styles')
+<style>
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50%      { opacity:.6; }
+}
+</style>
+@endpush
