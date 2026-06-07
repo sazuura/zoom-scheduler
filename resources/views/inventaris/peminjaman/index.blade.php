@@ -1,180 +1,191 @@
-@extends('layouts.inventaris')
-@section('title', 'Peminjaman')
+@extends('layouts.app')
+@section('title', 'Kelola Peminjaman')
+@section('sidebar-menu') <x-sidebar-inventaris /> @endsection
+
 @section('content')
 <main>
     <div class="head-title">
         <div class="left">
-            <h1>Daftar Peminjaman</h1>
-            <ul class="breadcrumb">
-                <li><a href="{{ route('inventaris.dashboard') }}">Inventaris</a></li>
-                <li><i class='bx bx-chevron-right'></i></li>
-                <li class="active">Peminjaman</li>
-            </ul>
+            <h1>Kelola Peminjaman</h1>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:13px;color:var(--dark-grey);">
+                <i class="bx bx-building"></i> {{ $gedung }}
+            </div>
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
-    {{-- Filter --}}
-    <form method="GET" action="{{ route('inventaris.peminjaman.index') }}" class="inv-toolbar">
-        <div class="filter-group">
-            <select name="status">
-                <option value="">Semua status</option>
-                <option value="diajukan"     {{ request('status') == 'diajukan'     ? 'selected' : '' }}>Menunggu</option>
-                <option value="disetujui"    {{ request('status') == 'disetujui'    ? 'selected' : '' }}>Disetujui</option>
-                <option value="ditolak"      {{ request('status') == 'ditolak'      ? 'selected' : '' }}>Ditolak</option>
-                <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
+    <div class="content-toolbar">
+        <form method="GET" action="{{ route('inventaris.peminjaman.index') }}" style="display:contents;">
+            <select name="status" class="toolbar-select">
+                <option value="">Semua Status</option>
+                <option value="diajukan"     {{ request('status')=='diajukan'     ?'selected':'' }}>Menunggu</option>
+                <option value="disetujui"    {{ request('status')=='disetujui'    ?'selected':'' }}>Disetujui</option>
+                <option value="ditolak"      {{ request('status')=='ditolak'      ?'selected':'' }}>Ditolak</option>
+                <option value="dikembalikan" {{ request('status')=='dikembalikan' ?'selected':'' }}>Dikembalikan</option>
             </select>
-            <button type="submit" class="btn-apply">Terapkan</button>
+            <button type="submit" class="toolbar-btn primary"><i class="bx bx-filter"></i> Filter</button>
             @if(request('status'))
-                <a href="{{ route('inventaris.peminjaman.index') }}" class="btn-clear">Reset</a>
+                <a href="{{ route('inventaris.peminjaman.index') }}" class="toolbar-btn neutral"><i class="bx bx-x"></i> Reset</a>
             @endif
-        </div>
-    </form>
+        </form>
+    </div>
 
-    <div class="table-data">
-        <div class="order">
-            <div class="head"><h3>Semua Pengajuan Peminjaman</h3></div>
-            <table>
+    <div class="data-table-wrap">
+        <div class="data-table-head">
+            <h3>Daftar Pengajuan</h3>
+            <small style="color:var(--dark-grey);">Hanya peralatan dari {{ $gedung }}</small>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="data-table">
                 <thead>
                     <tr>
-                        <th>No</th>
-                        <th>Operator</th>
+                        <th style="width:40px;">#</th>
+                        <th class="sortable">Pemohon <span class="sort-icon">⇅</span></th>
+                        <th class="hide-mobile">Keperluan</th>
+                        <th class="hide-mobile sortable">Tgl Pinjam <span class="sort-icon">⇅</span></th>
                         <th>Peralatan</th>
-                        <th>Jml</th>
-                        <th>Tgl Pinjam</th>
-                        <th>Tgl Kembali</th>
-                        <th>Keperluan</th>
                         <th>Status</th>
-                        <th>Aksi</th>
+                        <th style="width:100px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($peminjaman as $i => $p)
-                        <tr>
-                            <td>{{ $peminjaman->firstItem() + $i }}</td>
-                            <td>{{ $p->user->nama_user ?? '-' }}</td>
-                            <td>{{ $p->peralatan->nama_peralatan ?? '-' }}</td>
-                            <td>{{ $p->jumlah }}</td>
-                            <td>{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
-                            <td>{{ $p->tanggal_kembali_rencana->format('d/m/Y') }}</td>
-                            <td style="max-width:160px; font-size:.82rem;">{{ $p->keperluan }}</td>
-                            <td>
+                    @forelse($peminjaman as $index => $p)
+                    @php $uid = 'inv-pm-'.$p->id_peminjaman; @endphp
+                    <tr class="accordion-row" data-target="{{ $uid }}">
+                        <td>{{ $peminjaman->firstItem() + $index }}</td>
+                        <td>
+                            <div style="font-weight:500;">{{ $p->user->nama_user }}</div>
+                            <div style="font-size:12px;color:var(--dark-grey);">{{ $p->user->nohp ?? '-' }}</div>
+                        </td>
+                        <td class="hide-mobile">{{ $p->keperluan }}</td>
+                        <td class="hide-mobile">{{ $p->tanggal_pinjam->format('d/m/Y') }}</td>
+                        <td>
+                            <div style="display:flex;flex-direction:column;gap:3px;">
+                                @foreach($p->items->filter(fn($i) => $i->peralatan->gedung === $gedung) as $item)
+                                <span style="font-size:12px;">{{ $item->peralatan->nama_peralatan }} x{{ $item->jumlah }}</span>
+                                @endforeach
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:6px;">
                                 <span class="badge {{ $p->badge['class'] }}">{{ $p->badge['label'] }}</span>
-                            </td>
-                            <td>
-                                <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-
-                                    {{-- Setujui --}}
-                                    @if($p->isMenunggu())
-                                        <form action="{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="btn-action success" title="Setujui"
-                                                    onclick="return confirm('Setujui peminjaman ini? Stok akan dikurangi.')">
-                                                <i class='bx bx-check'></i>
-                                            </button>
-                                        </form>
-
-                                        {{-- Tolak (dengan modal sederhana) --}}
-                                        <button type="button" class="btn-action danger" title="Tolak"
-                                                onclick="toggleRejectForm({{ $p->id_peminjaman }})">
-                                            <i class='bx bx-x'></i>
-                                        </button>
-                                    @endif
-
-                                    {{-- Konfirmasi Kembali --}}
-                                    @if($p->isDisetujui())
-                                        <button type="button" class="btn-action edit" title="Konfirmasi Kembali"
-                                                onclick="toggleKembaliForm({{ $p->id_peminjaman }})">
-                                            <i class='bx bx-package'></i>
-                                        </button>
-                                    @endif
-
-                                </div>
-
-                                {{-- Form Tolak (inline, tersembunyi) --}}
+                                <i class="bx bx-chevron-down accordion-chevron"></i>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-group">
                                 @if($p->isMenunggu())
-                                    <div id="reject-form-{{ $p->id_peminjaman }}" style="display:none; margin-top:.5rem;">
-                                        <form action="{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}" method="POST">
-                                            @csrf
-                                            <input type="text" name="catatan_inventaris" placeholder="Alasan penolakan..."
-                                                   style="width:100%; padding:.35rem .6rem; border-radius:6px; border:1px solid #ddd; font-size:.8rem; margin-bottom:.35rem;">
-                                            <button type="submit" class="btn-apply" style="font-size:.78rem; padding:.3rem .7rem;">
-                                                Konfirmasi Tolak
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <form action="{{ route('inventaris.peminjaman.approve', $p->id_peminjaman) }}" method="POST" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn-icon success" title="Setujui"
+                                            onclick="return confirm('Setujui pengajuan ini?')">
+                                            <i class="bx bx-check"></i>
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn-icon delete" title="Tolak"
+                                        onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">
+                                        <i class="bx bx-x"></i>
+                                    </button>
+                                @elseif($p->isDisetujui())
+                                    <form action="{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}" method="POST" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn-icon view" title="Konfirmasi Kembali"
+                                            onclick="return confirm('Konfirmasi peralatan sudah dikembalikan?')">
+                                            <i class="bx bx-revision"></i>
+                                        </button>
+                                    </form>
                                 @endif
+                            </div>
+                        </td>
+                    </tr>
 
-                                {{-- Form Konfirmasi Kembali (inline, tersembunyi) --}}
-                                @if($p->isDisetujui())
-                                    <div id="kembali-form-{{ $p->id_peminjaman }}" style="display:none; margin-top:.5rem;">
-                                        <form action="{{ route('inventaris.peminjaman.kembali', $p->id_peminjaman) }}" method="POST">
-                                            @csrf
-                                            <input type="date" name="tanggal_kembali_aktual"
-                                                   value="{{ now()->format('Y-m-d') }}"
-                                                   style="width:100%; padding:.35rem .6rem; border-radius:6px; border:1px solid #ddd; font-size:.8rem; margin-bottom:.35rem;">
-                                            <input type="text" name="catatan_inventaris" placeholder="Catatan kondisi barang..."
-                                                   style="width:100%; padding:.35rem .6rem; border-radius:6px; border:1px solid #ddd; font-size:.8rem; margin-bottom:.35rem;">
-                                            <button type="submit" class="btn-apply" style="font-size:.78rem; padding:.3rem .7rem;"
-                                                    onclick="return confirm('Konfirmasi barang sudah dikembalikan? Stok akan bertambah kembali.')">
-                                                Konfirmasi Kembali
-                                            </button>
-                                        </form>
-                                    </div>
+                    {{-- Accordion detail --}}
+                    <tr class="accordion-detail" id="{{ $uid }}">
+                        <td colspan="7">
+                            <div class="accordion-detail-inner">
+                                <div class="detail-item">
+                                    <label>Pemohon</label>
+                                    <p>{{ $p->user->nama_user }} · {{ $p->user->nohp ?? '-' }}</p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Keperluan</label>
+                                    <p>{{ $p->keperluan }}</p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Tanggal Pinjam</label>
+                                    <p>{{ $p->tanggal_pinjam->translatedFormat('l, d F Y') }}</p>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Rencana Kembali</label>
+                                    <p>{{ $p->tanggal_kembali_rencana->translatedFormat('l, d F Y') }}</p>
+                                </div>
+                                @if($p->tanggal_kembali_aktual)
+                                <div class="detail-item">
+                                    <label>Dikembalikan</label>
+                                    <p>{{ $p->tanggal_kembali_aktual->translatedFormat('l, d F Y') }}</p>
+                                </div>
                                 @endif
-                            </td>
-                        </tr>
+                                <div class="detail-item">
+                                    <label>Catatan</label>
+                                    <p>{{ $p->catatan_inventaris ?? '-' }}</p>
+                                </div>
+                            </div>
+
+                            {{-- Form tolak inline --}}
+                            <div id="tolak-{{ $p->id_peminjaman }}" style="display:none;padding:12px 16px;border-top:1px solid var(--grey);background:var(--grey);">
+                                <form action="{{ route('inventaris.peminjaman.reject', $p->id_peminjaman) }}" method="POST"
+                                      style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                    @csrf
+                                    <input type="text" name="catatan_inventaris" class="form-input"
+                                        placeholder="Alasan penolakan (wajib)" required
+                                        style="flex:1;min-width:200px;height:36px;">
+                                    <button type="submit" class="toolbar-btn danger" style="height:36px;">
+                                        <i class="bx bx-x"></i> Tolak
+                                    </button>
+                                    <button type="button" class="toolbar-btn neutral" style="height:36px;"
+                                        onclick="toggleTolak('tolak-{{ $p->id_peminjaman }}')">Batal</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
                     @empty
-                        <tr>
-                            <td colspan="9" style="text-align:center; padding:2rem; color:#aaa;">
-                                Belum ada pengajuan peminjaman.
-                            </td>
-                        </tr>
+                    <tr>
+                        <td colspan="7" style="text-align:center;padding:40px;color:var(--dark-grey);">
+                            <i class="bx bx-cart-alt" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+                            Tidak ada pengajuan
+                        </td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>
-
-            @if($peminjaman->hasPages())
-                <div class="pagination-clean">
-                    @if($peminjaman->onFirstPage())
-                        <span class="page-btn disabled"><i class="bx bx-chevron-left"></i></span>
-                    @else
-                        <a href="{{ $peminjaman->previousPageUrl() }}" class="page-btn"><i class="bx bx-chevron-left"></i></a>
-                    @endif
-                    @foreach($peminjaman->getUrlRange(1, $peminjaman->lastPage()) as $page => $url)
-                        @if($page == $peminjaman->currentPage())
-                            <span class="page-btn active">{{ $page }}</span>
-                        @else
-                            <a href="{{ $url }}" class="page-btn">{{ $page }}</a>
-                        @endif
-                    @endforeach
-                    @if($peminjaman->hasMorePages())
-                        <a href="{{ $peminjaman->nextPageUrl() }}" class="page-btn"><i class="bx bx-chevron-right"></i></a>
-                    @else
-                        <span class="page-btn disabled"><i class="bx bx-chevron-right"></i></span>
-                    @endif
-                </div>
-            @endif
+        </div>
+        <div class="pagination-wrap">
+            <span>{{ $peminjaman->total() }} total pengajuan</span>
+            <div class="pagination-links">
+                @if($peminjaman->onFirstPage())
+                    <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
+                @else
+                    <a href="{{ $peminjaman->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
+                @endif
+                @foreach(range(1, $peminjaman->lastPage()) as $p)
+                    <a href="{{ $peminjaman->url($p) }}" class="page-link {{ $peminjaman->currentPage()==$p?'active':'' }}">{{ $p }}</a>
+                @endforeach
+                @if($peminjaman->hasMorePages())
+                    <a href="{{ $peminjaman->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
+                @else
+                    <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
+                @endif
+            </div>
         </div>
     </div>
 </main>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    function toggleRejectForm(id) {
-        const el = document.getElementById('reject-form-' + id);
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    }
-    function toggleKembaliForm(id) {
-        const el = document.getElementById('kembali-form-' + id);
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    }
+function toggleTolak(id) {
+    var el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 </script>
-@endsection
+@endpush
