@@ -26,12 +26,12 @@ class PeralatanController extends Controller
             ->paginate(10)
             ->withQueryString();
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('admin.peralatan.index', compact('peralatan', 'gedungList'));
+        return view('inventaris.peralatan.index', compact('peralatan', 'gedungList'));
     }
     public function create()
     {
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('admin.peralatan.create', compact('gedungList'));
+        return view('inventaris.peralatan.create', compact('gedungList'));
     }
     public function store(Request $request)
     {
@@ -49,13 +49,13 @@ class PeralatanController extends Controller
             ? $request->file('foto')->store('peralatan', 'public')
             : null;
         Peralatan::create($data);
-        return redirect()->route('admin.peralatan.index')
+        return redirect()->route('inventaris.peralatan.index')
             ->with('success', 'Peralatan berhasil ditambahkan.');
     }
     public function edit(string $id)
     {
         $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
-        return view('admin.peralatan.edit', [
+        return view('inventaris.peralatan.edit', [
             'peralatan' => Peralatan::findOrFail($id),
             'gedungList' => $gedungList,
         ]);
@@ -82,7 +82,7 @@ class PeralatanController extends Controller
         }
         $data['foto'] = $this->prosesUploadFoto($request, $peralatan);
         $peralatan->update($data);
-        return redirect()->route('admin.peralatan.index')
+        return redirect()->route('inventaris.peralatan.index')
             ->with('success', 'Peralatan berhasil diperbarui.');
     }
     public function destroy(string $id)

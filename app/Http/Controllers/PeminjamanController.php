@@ -117,4 +117,21 @@ class PeminjamanController extends Controller
         }
         return back()->with('success', 'Pengembalian berhasil dikonfirmasi.');
     }
+    public function operatorBatalkan(Request $request, string $id)
+    {
+        $request->validate([
+            'alasan_batal' => 'required|string|max:255',
+        ], [
+            'alasan_batal.required' => 'Alasan pembatalan wajib diisi.',
+        ]);
+        $peminjaman = Peminjaman::findOrFail($id);
+        abort_if($peminjaman->id_user !== auth()->user()->id_user, 403);
+        try {
+            $this->service->batalkan($peminjaman, $request->alasan_batal);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return redirect()->route('operator.peminjaman.index')
+            ->with('success', 'Pengajuan berhasil dibatalkan dan notifikasi WA telah dikirim ke inventaris.');
+    }
 }

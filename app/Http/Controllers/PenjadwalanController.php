@@ -124,4 +124,20 @@ class PenjadwalanController extends Controller
             'operator_ids' => $validated['operator_ids'],
         ];
     }
+    public function batalkan(Request $request, string $id)
+    {
+        $request->validate([
+            'alasan_batal' => 'required|string|max:255',
+        ], [
+            'alasan_batal.required' => 'Alasan pembatalan wajib diisi.',
+        ]);
+        $jadwal = Penjadwalan::with('absensi.user')->findOrFail($id);
+        try {
+            $this->service->batalkan($jadwal, $request->alasan_batal);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return redirect()->route('admin.jadwal.index')
+            ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi WA telah dikirim ke operator.');
+    }
 }

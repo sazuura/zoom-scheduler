@@ -97,40 +97,95 @@ class AdminController extends Controller
     public function laporanIndex(Request $request)
     {
         $operators = User::where('role', 'operator')->orderBy('nama_user')->get();
+        
         $absensi = Absensi::with(['user', 'penjadwalan'])
             ->when($request->start,    fn($q, $v) => $q->whereDate('tanggal', '>=', $v))
             ->when($request->end,      fn($q, $v) => $q->whereDate('tanggal', '<=', $v))
             ->when($request->operator, fn($q, $v) => $q->where('id_user', $v))
             ->orderByDesc('tanggal')
             ->get();
-        $jadwalPeralatan = JadwalPeralatan::with(['penjadwalan', 'peralatan'])
-            ->when($request->start, fn($q, $v) =>
-                $q->whereHas('penjadwalan', fn($p) => $p->whereDate('tanggal', '>=', $v))
-            )
-            ->when($request->end, fn($q, $v) =>
-                $q->whereHas('penjadwalan', fn($p) => $p->whereDate('tanggal', '<=', $v))
-            )
-            ->get();
+
+        // Menggunakan method baru agar logic filter seragam
+        $jadwalPeralatan = $this->queryJadwalPeralatan($request)->get();
+
         return view('admin.laporan.index', compact('absensi', 'operators', 'jadwalPeralatan'));
     }
 
     public function laporanExportPdf(Request $request)
     {
+        // Tab peralatan → export data peralatan
+        if ($request->tab === 'panel-peralatan') {
+            $jadwalPeralatan = $this->queryJadwalPeralatan($request)->get();
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                'admin.laporan.pdf_peralatan',
+                compact('jadwalPeralatan')
+            );
+            return $pdf->download('laporan-peralatan.pdf');
+        }
+
+        // Default → export data presensi
         $absensi = Absensi::with(['user', 'penjadwalan'])
             ->when($request->start,    fn($q, $v) => $q->whereDate('tanggal', '>=', $v))
             ->when($request->end,      fn($q, $v) => $q->whereDate('tanggal', '<=', $v))
             ->when($request->operator, fn($q, $v) => $q->where('id_user', $v))
             ->orderByDesc('tanggal')
             ->get();
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan.pdf', compact('absensi'));
         return $pdf->download('laporan-presensi.pdf');
     }
 
     public function laporanExportExcel(Request $request)
     {
+        // Tab peralatan → export data peralatan
+        if ($request->tab === 'panel-peralatan') {
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\PeralatanExport($request),
+                'laporan-peralatan.xlsx'
+            );
+        }
+
+        // Default → export data presensi
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\LaporanExport($request),
             'laporan-presensi.xlsx'
         );
+    }
+
+    public function peralatanIndex(Request $request)
+    {
+        $gedung = $request->gedung;
+        $peralatan = Peralatan::query()
+            ->when($request->search, fn($q, $s) =>
+                $q->where('nama_peralatan', 'like', "%{$s}%")
+                  ->orWhere('kode_barang',  'like', "%{$s}%")
+                  ->orWhere('gedung',       'like', "%{$s}%")
+            )
+            ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
+            ->when($request->status, fn($q, $v) => match ($v) {
+                'tersedia'       => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) > 0'),
+                'tidak_tersedia' => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) <= 0'),
+                default          => $q,
+            })
+            ->orderBy('gedung')
+            ->orderBy('nama_peralatan')
+            ->paginate(10)
+            ->withQueryString();
+        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
+        return view('admin.peralatan.index', compact('peralatan', 'gedungList','gedung'));
+    }
+
+    /**
+     * Helper method untuk query Jadwal Peralatan agar filter PDF dan Index selalu sinkron.
+     */
+    private function queryJadwalPeralatan(Request $request)
+    {
+        return JadwalPeralatan::with(['penjadwalan', 'peralatan'])
+            ->when($request->start, fn($q, $v) =>
+                $q->whereHas('penjadwalan', fn($p) => $p->whereDate('tanggal', '>=', $v))
+            )
+            ->when($request->end, fn($q, $v) =>
+                $q->whereHas('penjadwalan', fn($p) => $p->whereDate('tanggal', '<=', $v))
+            );
     }
 }
