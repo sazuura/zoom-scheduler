@@ -20,6 +20,9 @@ return new class extends Migration
                   ->references('id_user')
                   ->on('users')
                   ->nullOnDelete();
+            $table->enum('status', ['selesai', 'dibatalkan'])->default('selesai');
+            $table->string('alasan_batal', 255)->nullable();
+            $table->timestamp('dibatalkan_at')->nullable();
         });
     }
 

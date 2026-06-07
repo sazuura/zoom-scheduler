@@ -14,6 +14,7 @@ class Peminjaman extends Model
         'keperluan',
         'status',
         'catatan_inventaris',
+        'alasan_batal',
     ];
     protected $casts = [
         'tanggal_pinjam'          => 'date',
@@ -35,15 +36,17 @@ class Peminjaman extends Model
     public function isDisetujui(): bool    { return $this->status === 'disetujui'; }
     public function isDitolak(): bool      { return $this->status === 'ditolak'; }
     public function isDikembalikan(): bool { return $this->status === 'dikembalikan'; }
+    public function isDibatalkan(): bool   { return $this->status === 'dibatalkan'; }
 
     public function getBadgeAttribute(): array
     {
         return match ($this->status) {
-            'diajukan'     => ['class' => 'badge-warning',  'label' => 'Menunggu'],
-            'disetujui'    => ['class' => 'badge-active',   'label' => 'Disetujui'],
-            'ditolak'      => ['class' => 'badge-danger',   'label' => 'Ditolak'],
-            'dikembalikan' => ['class' => 'badge-info',     'label' => 'Dikembalikan'],
-            default        => ['class' => '',               'label' => $this->status],
+            'diajukan','menunggu'     => ['class' => 'badge-warning',  'label' => 'Menunggu'],
+            'disetujui'               => ['class' => 'badge-active',   'label' => 'Disetujui'],
+            'ditolak'                 => ['class' => 'badge-danger',   'label' => 'Ditolak'],
+            'dikembalikan'            => ['class' => 'badge-info',     'label' => 'Dikembalikan'],
+            'dibatalkan'              => ['class' => 'badge-danger',   'label' => 'Dibatalkan'],
+            default                   => ['class' => '',               'label' => $this->status],
         };
     }
 

@@ -19,6 +19,7 @@ return new class extends Migration
                 'disetujui',
                 'ditolak',
                 'dikembalikan',
+                'dibatalkan',
             ])->default('diajukan');
             $table->string('catatan_inventaris', 255)->nullable();
             $table->timestamps();
@@ -26,6 +27,8 @@ return new class extends Migration
                   ->references('id_user')
                   ->on('users')
                   ->cascadeOnDelete();
+            $table->string('alasan_batal', 255)->nullable();
+            $table->timestamp('dibatalkan_at')->nullable();
         });
     }
 

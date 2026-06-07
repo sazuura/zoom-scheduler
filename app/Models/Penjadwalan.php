@@ -19,6 +19,8 @@ class Penjadwalan extends Model
         'platform',
         'keterangan',
         'id_pemateri',
+        'status',
+        'alasan_batal',
     ];
     protected $casts = [
         'tanggal' => 'date:Y-m-d',
@@ -38,6 +40,11 @@ class Penjadwalan extends Model
     {
         return $this->belongsTo(User::class, 'id_pemateri', 'id_user')
                     ->withDefault(['nama_user' => '-']);
+    }
+
+    public function isDibatalkan(): bool
+    {
+        return $this->status === 'dibatalkan' || !empty($this->alasan_batal);
     }
 
     public function getStartDateTimeAttribute(): ?Carbon
