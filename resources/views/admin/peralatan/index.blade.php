@@ -1,148 +1,125 @@
-@extends('layouts.admin')
-@section('title', 'Data Peralatan')
+@extends('layouts.app')
+@section('title', 'Peralatan Saya')
+@section('sidebar-menu') <x-sidebar-admin /> @endsection
+
 @section('content')
     <main>
         <div class="head-title">
             <div class="left">
-                <h1>Data Peralatan</h1>
+                <h1>Peralatan Saya</h1>
             </div>
-            <a href="{{ route('admin.peralatan.create') }}" class="btn-download">
-                <i class="bx bx-plus"></i>
-                <span class="text">Tambah Peralatan</span>
-            </a>
         </div>
 
-        <div class="toolbar">
-            <form method="GET" action="{{ route('admin.peralatan.index') }}" class="toolbar-form">
-                <div class="search-box">
+        <div class="content-toolbar">
+            <form method="GET" action="{{ route('admin.peralatan.index') }}" style="display:contents;">
+                <div class="toolbar-search">
                     <i class="bx bx-search"></i>
-                    <input type="text" name="search" placeholder="Cari barang..." value="{{ request('search') }}">
+                    <input type="text" name="search" placeholder="Cari nama / kode barang..."
+                        value="{{ request('search') }}">
                 </div>
-                <div class="filter-group">
-                    <select name="status">
-                        <option value="">Semua status</option>
-                        <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>
-                            Tersedia
-                        </option>
-                        <option value="tidak-tersedia" {{ request('status') == 'tidak-tersedia' ? 'selected' : '' }}>
-                            Tidak Tersedia
-                        </option>
-                    </select>
-                    <button type="submit" class="btn-apply">
-                        Terapkan
-                    </button>
-                    @if(request()->hasAny(['search', 'status']))
-                        <a href="{{ route('admin.peralatan.index') }}" class="btn-clear">
-                            Reset
-                        </a>
-                    @endif
+                <select name="status" class="toolbar-select">
+                    <option value="">Semua Status</option>
+                    <option value="tersedia" {{ request('status') == 'tersedia' ? 'selected' : '' }}>Tersedia</option>
+                    <option value="tidak_tersedia" {{ request('status') == 'tidak_tersedia' ? 'selected' : '' }}>Tidak
+                        Tersedia
+                    </option>
+                    <option value="kritis" {{ request('status') == 'kritis' ? 'selected' : '' }}>Hampir Habis</option>
+                </select>
+                <button type="submit" class="toolbar-btn primary"><i class="bx bx-filter"></i> Filter</button>
+                @if(request()->hasAny(['search', 'status']))
+                    <a href="{{ route('admin.peralatan.index') }}" class="toolbar-btn neutral"><i class="bx bx-x"></i>
+                        Reset</a>
+                @endif
+                <div class="toolbar-right">
+                    <span style="font-size:13px;color:var(--dark-grey);">{{ $peralatan->total() }} peralatan</span>
                 </div>
             </form>
         </div>
-        <div class="table-data">
-            <div class="order">
-                <div class="head">
-                    <h3>List Peralatan</h3>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama Peralatan</th>
-                            <th>Lokasi</th>
-                            <th>Stok</th>
-                            <th>Ketersediaan</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($peralatan as $index => $item)
-                            <tr>
-                                <td>{{ $peralatan->firstItem() + $index}}</td>
-                                <td>{{ $item->nama_peralatan }}</td>
-                                <td>{{ $item->lokasi_penyimpanan }}</td>
-                                <td>{{ $item->stok_tersedia }}</td>
-                                <td>
-                                    @if($item->status === 'Tersedia')
-                                        <span class="badge badge-active">
-                                            <i class="bx bx-check-circle"></i> Tersedia
-                                        </span>
-                                    @else
-                                        <span class="badge badge-inactive">
-                                            <i class="bx bx-x-circle"></i> Tidak Tersedia
-                                        </span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        {{-- Tombol Edit --}}
-                                        <a href="{{ route('admin.peralatan.edit', $item->id_peralatan) }}"
-                                            class="btn-action edit">
-                                            <i class="bx bx-edit"></i>
-                                        </a>
-                                        {{-- Tombol Hapus --}}
-                                        @if($item->dipakai > 0 || $item->stok_tersedia <= 0)
-                                            <button class="btn-action delete disabled-btn" disabled
-                                                title="Barang sedang digunakan dalam jadwal">
-                                                <i class="bx bx-trash"></i>
-                                            </button>
-                                        @else
-                                            <form action="{{ route('admin.peralatan.destroy', $item->id_peralatan) }}" method="POST"
-                                                style="display:inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn-action delete"
-                                                    onclick="return confirm('Yakin hapus peralatan ini?')">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" style="text-align:center; padding:15px;">Belum ada peralatan</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-                @if ($peralatan->hasPages())
-                    <div class="pagination-clean">
 
-                        {{-- Previous --}}
-                        @if ($peralatan->onFirstPage())
-                            <span class="page-btn disabled">
-                                <i class="bx bx-chevron-left"></i>
-                            </span>
+        @if($peralatan->count())
+            <div class="peralatan-grid">
+                @foreach($peralatan as $item)
+                    <div class="peralatan-card">
+                        @if($item->foto)
+                            <img src="{{ Storage::url($item->foto) }}" alt="{{ $item->nama_peralatan }}" class="peralatan-card-img">
                         @else
-                            <a href="{{ $peralatan->previousPageUrl() }}" class="page-btn">
-                                <i class="bx bx-chevron-left"></i>
-                            </a>
+                            <div class="peralatan-card-img-placeholder"><i class="bx bx-package"></i></div>
                         @endif
-
-                        {{-- Page Numbers --}}
-                        @foreach ($peralatan->getUrlRange(1, $peralatan->lastPage()) as $page => $url)
-                            @if ($page == $peralatan->currentPage())
-                                <span class="page-btn active">{{ $page }}</span>
-                            @else
-                                <a href="{{ $url }}" class="page-btn">{{ $page }}</a>
+                        <div class="peralatan-card-body">
+                            {{-- Kode barang --}}
+                            @if($item->kode_barang)
+                                <div style="font-size:11px;color:var(--dark-grey);display:flex;align-items:center;gap:4px;">
+                                    <i class="bx bx-barcode"></i> {{ $item->kode_barang }}
+                                </div>
                             @endif
-                        @endforeach
 
-                        {{-- Next --}}
-                        @if ($peralatan->hasMorePages())
-                            <a href="{{ $peralatan->nextPageUrl() }}" class="page-btn">
-                                <i class="bx bx-chevron-right"></i>
-                            </a>
+                            <div class="peralatan-card-name">{{ $item->nama_peralatan }}</div>
+
+                            @if($item->lokasi_detail)
+                                <div class="peralatan-card-gedung">
+                                    <i class="bx bx-map-pin"></i> {{ $item->lokasi_detail }}
+                                </div>
+                            @endif
+
+                            {{-- Stok breakdown --}}
+                            <div style="font-size:12px;color:var(--dark-grey);display:flex;flex-direction:column;gap:3px;">
+                                <div style="display:flex;justify-content:space-between;">
+                                    <span>Total stok</span>
+                                    <span style="font-weight:600;color:var(--dark);">{{ $item->stok }}</span>
+                                </div>
+                                @if($item->rusak > 0)
+                                    <div style="display:flex;justify-content:space-between;">
+                                        <span>Rusak</span>
+                                        <span style="color:#e74c3c;">{{ $item->rusak }}</span>
+                                    </div>
+                                @endif
+                                @if($item->perbaikan > 0)
+                                    <div style="display:flex;justify-content:space-between;">
+                                        <span>Perbaikan</span>
+                                        <span style="color:#f39c12;">{{ $item->perbaikan }}</span>
+                                    </div>
+                                @endif
+                                <div
+                                    style="display:flex;justify-content:space-between;border-top:1px solid var(--grey);padding-top:3px;margin-top:2px;">
+                                    <span style="font-weight:500;">Tersedia</span>
+                                    <span
+                                        style="font-weight:700;font-size:15px;color:var(--dark);">{{ $item->stok_tersedia }}</span>
+                                </div>
+                            </div>
+
+                            <span class="badge {{ $item->statusBadgeClass }}">{{ $item->statusLabel }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div style="margin-top:20px;" class="data-table-wrap">
+                <div class="pagination-wrap">
+                    <span>Menampilkan {{ $peralatan->firstItem() }}–{{ $peralatan->lastItem() }} dari {{ $peralatan->total() }}
+                        peralatan</span>
+                    <div class="pagination-links">
+                        @if($peralatan->onFirstPage())
+                            <span class="page-link disabled"><i class="bx bx-chevron-left"></i></span>
                         @else
-                            <span class="page-btn disabled">
-                                <i class="bx bx-chevron-right"></i>
-                            </span>
+                            <a href="{{ $peralatan->previousPageUrl() }}" class="page-link"><i class="bx bx-chevron-left"></i></a>
+                        @endif
+                        @foreach(range(1, $peralatan->lastPage()) as $p)
+                            <a href="{{ $peralatan->url($p) }}"
+                                class="page-link {{ $peralatan->currentPage() == $p ? 'active' : '' }}">{{ $p }}</a>
+                        @endforeach
+                        @if($peralatan->hasMorePages())
+                            <a href="{{ $peralatan->nextPageUrl() }}" class="page-link"><i class="bx bx-chevron-right"></i></a>
+                        @else
+                            <span class="page-link disabled"><i class="bx bx-chevron-right"></i></span>
                         @endif
                     </div>
-                @endif
+                </div>
             </div>
-        </div>
+        @else
+            <div class="data-table-wrap" style="padding:60px;text-align:center;color:var(--dark-grey);">
+                <i class="bx bx-package" style="font-size:48px;display:block;margin-bottom:12px;"></i>
+                <p>Tidak ada peralatan terdaftar untuk {{ $gedung }}</p>
+            </div>
+        @endif
     </main>
 @endsection

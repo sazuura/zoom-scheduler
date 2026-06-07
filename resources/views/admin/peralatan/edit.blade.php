@@ -1,145 +1,138 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 @section('title', 'Edit Peralatan')
+@section('sidebar-menu') <x-sidebar-admin /> @endsection
+
 @section('content')
-    <main>
-        <div class="head-title">
-            <div class="left">
-                <h1>Edit Peralatan</h1>
-                <ul class="breadcrumb">
-                    <li><a href="{{ route('admin.peralatan.index') }}">Peralatan</a></li>
-                    <li><i class="bx bx-chevron-right"></i></li>
-                    <li><a class="active" href="#">Edit</a></li>
-                </ul>
-            </div>
-        </div>
+<main>
+    <div class="head-title">
+        <div class="left"><h1>Edit Peralatan</h1></div>
+        <a href="{{ route('admin.peralatan.index') }}" class="toolbar-btn neutral">
+            <i class="bx bx-arrow-back"></i> Kembali
+        </a>
+    </div>
 
-        <div class="table-data">
-            <div class="order" style="flex:1;">
-                <div class="head">
-                    <h3>Form Edit Peralatan</h3>
+    @if($errors->any())
+    <div style="background:#fdecea;border-left:4px solid #e74c3c;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;color:#c0392b;">
+        <ul style="margin:0;padding-left:18px;">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+    </div>
+    @endif
+
+    <form action="{{ route('admin.peralatan.update', $peralatan->id_peralatan) }}" method="POST" enctype="multipart/form-data">
+        @csrf @method('PUT')
+
+        <div class="form-card">
+            <h3><i class="bx bx-info-circle"></i> Informasi Peralatan</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">ID Peralatan</label>
+                    <input type="text" class="form-input" value="{{ $peralatan->id_peralatan }}" readonly>
+                    <span class="form-hint">ID tidak bisa diubah.</span>
                 </div>
-                {{-- Validasi --}}
-                @if ($errors->any())
-                    <div style="background:#fff3cd;border:1px solid #ffeeba;padding:12px;border-radius:8px;margin-bottom:16px;">
-                        <ul style="margin:0;padding-left:18px;color:#856404;">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form action="{{ route('admin.peralatan.update', $peralatan->id_peralatan) }}" method="POST"
-                    autocomplete="off">
-                    @csrf
-                    @method('PUT')
-                    {{-- ID --}}
-                    <div class="mb-3" style="margin-bottom:12px;">
-                        <label>ID Peralatan</label>
-                        <input type="text" value="{{ $peralatan->id_peralatan }}" readonly
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#f5f5f5;">
-                    </div>
-
-                    {{-- Nama --}}
-                    <div class="mb-3" style="margin-bottom:12px;">
-                        <label>Nama Peralatan</label>
-                        <input type="text" name="nama_peralatan"
-                            value="{{ old('nama_peralatan', $peralatan->nama_peralatan) }}" required
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">
-                    </div>
-
-                    {{-- Lokasi --}}
-                    <div class="mb-3" style="margin-bottom:12px;">
-                        <label>Lokasi Penyimpanan</label>
-                        <input type="text" name="lokasi_penyimpanan"
-                            value="{{ old('lokasi_penyimpanan', $peralatan->lokasi_penyimpanan) }}" required
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">
-                    </div>
-
-                    {{-- Stok --}}
-                    <div class="mb-3" style="margin-bottom:12px;">
-                        <label>Stok</label>
-                        <input type="number" name="stok" min="0" value="{{ old('stok', $peralatan->stok) }}" required
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">
-                    </div>
-
-                    {{-- Informasi Stok --}}
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                        {{-- Terpakai --}}
-                        <div>
-                            <label>Jumlah Terpakai</label>
-                            <input type="number" value="{{ $peralatan->dipakai }}" disabled
-                                style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#f5f5f5;">
-                        </div>
-                        {{-- Tersedia --}}
-                        <div>
-                            <label>Unit yang Tersedia</label>
-                            <input type="number" value="{{ $peralatan->stok_tersedia }}" disabled
-                                style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#f5f5f5;">
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-                        {{-- Rusak --}}
-                        <div>
-                            <label>Jumlah Rusak</label>
-                            <input type="number" id="rusak" name="rusak" min="0"
-                                value="{{ old('rusak', $peralatan->rusak) }}"
-                                style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">
-                        </div>
-                        {{-- Maintenance --}}
-                        <div>
-                            <label>Jumlah Maintenance</label>
-                            <input type="number" id="perbaikan" name="perbaikan" min="0"
-                                value="{{ old('perbaikan', $peralatan->perbaikan) }}"
-                                style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">
-                        </div>
-                    </div>
-
-                    {{-- Keterangan --}}
-                    <div class="mb-3" id="keterangan" style="margin-bottom:12px; display:none;">
-                        <label>Keterangan</label>
-                        <textarea name="keterangan" rows="3"
-                            placeholder="Contoh: Lensa kamera retak / Sedang diperbaiki di Lab Elektronik / Unit cadangan ruang rapat A"
-                            style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd;">{{ old('keterangan', $peralatan->keterangan ?? '') }}</textarea>
-                        <small style="color:#777;">
-                            Tambahkan keterangan kondisi barang, lokasi perbaikan, atau informasi tambahan lainnya.
-                        </small>
-                    </div>
-
-                    {{-- Tombol --}}
-                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;">
-                        <a href="{{ route('admin.peralatan.index') }}"
-                            style="padding:8px 14px; background:#e0e0e0; border-radius:6px; text-decoration:none; color:#222;">
-                            Batal
-                        </a>
-                        <button type="submit"
-                            style="padding:8px 14px; background:#3C91E6; color:#fff; border:none; border-radius:6px;">
-                            Update
-                        </button>
-                    </div>
-
-                </form>
+                <div class="form-group">
+                    <label class="form-label">Kode Barang</label>
+                    <input type="text" name="kode_barang" class="form-input {{ $errors->has('kode_barang')?'error':'' }}"
+                        value="{{ old('kode_barang', $peralatan->kode_barang) }}" placeholder="cth: GU/LAP/2024/001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Peralatan <span class="req">*</span></label>
+                    <input type="text" name="nama_peralatan" class="form-input"
+                        value="{{ old('nama_peralatan', $peralatan->nama_peralatan) }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gedung <span class="req">*</span></label>
+                    <input type="text" name="gedung" class="form-input"
+                        value="{{ old('gedung', $peralatan->gedung) }}" list="gedung-list" required>
+                    <datalist id="gedung-list">
+                        @foreach($gedungList as $g)<option value="{{ $g }}">@endforeach
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lokasi Detail</label>
+                    <input type="text" name="lokasi_detail" class="form-input"
+                        value="{{ old('lokasi_detail', $peralatan->lokasi_detail) }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Keterangan</label>
+                    <input type="text" name="keterangan" class="form-input"
+                        value="{{ old('keterangan', $peralatan->keterangan) }}">
+                </div>
             </div>
         </div>
-    </main>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const rusakInput = document.getElementById("rusak");
-            const perbaikanInput = document.getElementById("perbaikan");
-            const keteranganBox = document.getElementById("keterangan");
-            function toggleKeterangan() {
-                const rusak = parseInt(rusakInput.value) || 0;
-                const perbaikan = parseInt(perbaikanInput.value) || 0;
-                if (rusak > 0 || perbaikan > 0) {
-                    keteranganBox.style.display = "block";
-                } else {
-                    keteranganBox.style.display = "none";
-                }
-            }
-            toggleKeterangan();
-            rusakInput.addEventListener("input", toggleKeterangan);
-            perbaikanInput.addEventListener("input", toggleKeterangan);
-        });
-    </script>
+
+        <div class="form-card">
+            <h3><i class="bx bx-data"></i> Data Stok</h3>
+            <div class="form-grid cols-3">
+                <div class="form-group">
+                    <label class="form-label">Stok Total <span class="req">*</span></label>
+                    <input type="number" name="stok" class="form-input {{ $errors->has('stok')?'error':'' }}"
+                        value="{{ old('stok', $peralatan->stok) }}" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unit Rusak</label>
+                    <input type="number" name="rusak" class="form-input {{ $errors->has('rusak')?'error':'' }}"
+                        value="{{ old('rusak', $peralatan->rusak) }}" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dalam Perbaikan</label>
+                    <input type="number" name="perbaikan" class="form-input"
+                        value="{{ old('perbaikan', $peralatan->perbaikan) }}" min="0">
+                </div>
+            </div>
+            <div style="margin-top:12px;padding:10px 14px;background:var(--grey);border-radius:8px;font-size:13px;">
+                <span style="color:var(--dark-grey);">Stok tersedia = stok - rusak - perbaikan = </span>
+                <strong style="color:var(--blue);" id="stok-preview">{{ $peralatan->stok_tersedia }}</strong>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3><i class="bx bx-image"></i> Foto</h3>
+            @if($peralatan->foto)
+            <div style="margin-bottom:14px;">
+                <p style="font-size:13px;color:var(--dark-grey);margin-bottom:8px;">Foto saat ini:</p>
+                <img src="{{ Storage::url($peralatan->foto) }}" alt="Foto"
+                     style="height:120px;border-radius:8px;object-fit:cover;border:1px solid var(--grey);">
+                <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" name="hapus_foto" value="1"> Hapus foto ini
+                </label>
+            </div>
+            @endif
+            <div class="form-group">
+                <label class="form-label">{{ $peralatan->foto ? 'Upload Foto Baru' : 'Upload Foto' }} <small>(opsional, max 2MB)</small></label>
+                <input type="file" name="foto" class="form-input" accept="image/jpg,image/jpeg,image/png,image/webp"
+                    id="foto-input" style="height:auto;padding:8px 12px;">
+                <div id="foto-preview" style="margin-top:10px;display:none;">
+                    <img id="foto-img" src="" alt="Preview" style="height:120px;border-radius:8px;object-fit:cover;border:1px solid var(--grey);">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ route('admin.peralatan.index') }}" class="btn-cancel">Batal</a>
+            <button type="submit" class="btn-submit"><i class="bx bx-save"></i> Simpan Perubahan</button>
+        </div>
+    </form>
+</main>
 @endsection
+
+@push('scripts')
+<script>
+// Live preview stok tersedia
+var inputs = ['stok','rusak','perbaikan'].map(function(n){ return document.querySelector('[name="'+n+'"]'); });
+function updatePreview() {
+    var s = parseInt(inputs[0].value)||0;
+    var r = parseInt(inputs[1].value)||0;
+    var p = parseInt(inputs[2].value)||0;
+    document.getElementById('stok-preview').textContent = Math.max(0, s-r-p);
+}
+inputs.forEach(function(el){ if(el) el.addEventListener('input', updatePreview); });
+
+// Foto preview
+document.getElementById('foto-input').addEventListener('change', function () {
+    var file = this.files[0];
+    var prev = document.getElementById('foto-preview');
+    var img  = document.getElementById('foto-img');
+    if (file) { img.src = URL.createObjectURL(file); prev.style.display='block'; }
+    else       { prev.style.display='none'; }
+});
+</script>
+@endpush

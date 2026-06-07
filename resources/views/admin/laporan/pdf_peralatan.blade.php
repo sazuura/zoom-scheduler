@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Presensi — Diskominfotik</title>
+    <title>Laporan Peralatan — Diskominfotik</title>
     <style>
         * {
             margin: 0;
@@ -67,34 +67,14 @@
             font-weight: 600;
         }
 
-        .hadir {
+        .terpasang {
             background: #e6f9f0;
             color: #1abc9c;
         }
 
-        .izin_disetujui {
-            background: #e8f4fd;
-            color: #3498db;
-        }
-
-        .sakit_disetujui {
-            background: #f3e8ff;
-            color: #8b5cf6;
-        }
-
-        .alpha {
-            background: #fdecea;
-            color: #e74c3c;
-        }
-
-        .pending {
+        .belum {
             background: #fff4e5;
             color: #f39c12;
-        }
-
-        .ditolak {
-            background: #f1f1f1;
-            color: #555;
         }
 
         .footer {
@@ -108,7 +88,7 @@
 
 <body>
     <div class="header">
-        <h2>LAPORAN PRESENSI OPERATOR</h2>
+        <h2>LAPORAN PERALATAN DIGUNAKAN</h2>
         <p>Diskominfotik Kabupaten Bandung Barat</p>
         <p>Dicetak: {{ now()->translatedFormat('l, d F Y H:i') }} WIB</p>
     </div>
@@ -116,26 +96,34 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Operator</th>
+                <th>Peralatan</th>
+                <th>Kode Barang</th>
+                <th>Gedung</th>
                 <th>Kegiatan</th>
                 <th>Tanggal</th>
-                <th>Platform</th>
+                <th>Jml</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($absensi as $index => $a)
+            @forelse($jadwalPeralatan as $i => $jp)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $a->user->nama_user }}</td>
-                    <td>{{ $a->penjadwalan->judul_kegiatan }}</td>
-                    <td>{{ $a->tanggal->format('d/m/Y') }}</td>
-                    <td>{{ str_contains($a->penjadwalan->platform, 'Online') ? 'Online' : 'Offline' }}</td>
-                    <td><span class="badge {{ $a->status }}">{{ $a->badge['label'] }}</span></td>
+                    <td>{{ $i + 1 }}</td>
+                    <td>{{ $jp->peralatan->nama_peralatan }}</td>
+                    <td>{{ $jp->peralatan->kode_barang ?? '-' }}</td>
+                    <td>{{ $jp->peralatan->gedung }}</td>
+                    <td>{{ $jp->penjadwalan->judul_kegiatan }}</td>
+                    <td>{{ $jp->penjadwalan->tanggal->format('d/m/Y') }}</td>
+                    <td>{{ $jp->jumlah }}</td>
+                    <td>
+                        <span class="badge {{ $jp->sudahDipasang() ? 'terpasang' : 'belum' }}">
+                            {{ $jp->sudahDipasang() ? 'Terpasang' : 'Belum' }}
+                        </span>
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="text-align:center;padding:15px;">Tidak ada data</td>
+                    <td colspan="8" style="text-align:center;padding:15px;">Tidak ada data</td>
                 </tr>
             @endforelse
         </tbody>
