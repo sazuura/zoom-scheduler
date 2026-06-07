@@ -120,4 +120,29 @@ class PenjadwalanService
             $this->wa->kirim($operator->nohp, $pesan);
         }
     }
+    public function batalkan(Penjadwalan $jadwal, string $alasan): void
+    {
+        if ($jadwal->isDibatalkan()) {
+            throw new \RuntimeException('Jadwal ini sudah dibatalkan sebelumnya.');
+        }
+        $jadwal->update([
+            'status'        => 'dibatalkan',
+            'alasan_batal'  => $alasan,
+            'dibatalkan_at' => now(),
+        ]);
+        // Kirim notif WA ke semua operator yang ditugaskan
+        foreach ($jadwal->absensi as $a) {
+            $operator = $a->user;
+            if (!$operator?->nohp) continue;
+            $pesan = $this->wa->templateJadwalDibatalkan(
+                $operator->nama_user,
+                $jadwal->tanggal->format('d/m/Y'),
+                $jadwal->waktu_mulai,
+                $jadwal->waktu_selesai,
+                $jadwal->judul_kegiatan,
+                $alasan,
+            );
+            $this->wa->kirim($operator->nohp, $pesan);
+        }
+    }
 }

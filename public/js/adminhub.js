@@ -1,18 +1,3 @@
-/**
- * adminhub.js — Diskominfotik
- *
- * 1. Sidebar active-state
- * 2. Sidebar toggle desktop — collapse (.hide) + localStorage
- * 3. Sidebar toggle mobile  — drawer (.sidebar-open) + overlay
- * 4. Dark mode              — init checkbox+icon + listener onChange
- * 5. Flash toast            — auto-dismiss 4 detik
- *
- * Catatan dark mode:
- *   Anti-flash (cegah putih saat pindah halaman) ditangani di app.blade.php
- *   via document.write('<body class="dark">') di <head> sebelum CSS dimuat.
- *   File ini hanya sinkronisasi checkbox, icon, dan handle klik toggle.
- */
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // ── 1. Active state ───────────────────────────────────────────────────────

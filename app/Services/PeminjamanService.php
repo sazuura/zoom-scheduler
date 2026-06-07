@@ -126,4 +126,38 @@ class PeminjamanService
             );
         }
     }
+        public function batalkan(Peminjaman $peminjaman, string $alasan): void
+    {
+        if (!$peminjaman->isMenunggu()) {
+            throw new \RuntimeException('Hanya pengajuan berstatus "Menunggu" yang bisa dibatalkan.');
+        }
+        $peminjaman->update([
+            'status'        => 'dibatalkan',
+            'alasan_batal'  => $alasan,
+            'dibatalkan_at' => now(),
+        ]);
+        // Kirim notif ke inventaris per gedung
+        $peminjaman->load(['items.peralatan', 'user']);
+        $itemPerGedung = $peminjaman->items->groupBy(fn($item) => $item->peralatan->gedung);
+        foreach ($itemPerGedung as $gedung => $items) {
+            $inventaris = \App\Models\User::where('role', 'inventaris')
+                ->where('gedung', $gedung)
+                ->where('status', 'active')
+                ->first();
+            if (!$inventaris?->nohp) continue;
+            $daftarPeralatan = $items->map(function ($item) {
+                return "  - {$item->peralatan->nama_peralatan} (x{$item->jumlah})";
+            })->join("\n");
+            $pesan = $this->wa->templatePeminjamanDibatalkan(
+                namaInventaris:  $inventaris->nama_user,
+                namaOperator:    $peminjaman->user->nama_user,
+                gedung:          $gedung,
+                tanggalPinjam:   $peminjaman->tanggal_pinjam->format('d/m/Y'),
+                tanggalKembali:  $peminjaman->tanggal_kembali_rencana->format('d/m/Y'),
+                keperluan:       $peminjaman->keperluan,
+                daftarPeralatan: $daftarPeralatan,
+            );
+            $this->wa->kirim($inventaris->nohp, $pesan);
+        }
+    }
 }

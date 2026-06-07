@@ -1,55 +1,67 @@
 <x-guest-layout>
-    <div class="w-full sm:max-w-md mt-6 px-6 py-8 bg-white shadow-xl overflow-hidden rounded-xl border border-gray-200">
 
-        <div class="flex flex-col items-center">
-            <img src="{{ asset('img/logo.png') }}" alt="Logo Diskominfo"
-                class="w-21 h-21 mb-3 transform hover:scale-105 transition duration-300 ease-in-out">
+    {{-- Session status (misal: "Link reset password sudah dikirim") --}}
+    @if (session('status'))
+        <div class="login-error" style="color:#2ecc71; margin-bottom:14px;">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}">
+        @csrf
+
+        {{-- Email --}}
+        <div class="login-field">
+            <label class="login-label" for="email">Email</label>
+            <input id="email" class="login-input" type="email" name="email" value="{{ old('email') }}" required
+                autofocus autocomplete="username">
+            @error('email')
+                <span class="login-error">{{ $message }}</span>
+            @enderror
         </div>
 
-        <x-auth-session-status class="mb-4" :status="session('status')" />
-        <form method="POST" action="{{ route('login') }}" class="w-full space-y-6">
-            @csrf
-            <div>
-                <x-input-label for="email" :value="__('Email')" class="text-gray-700" />
-                <x-text-input id="email"
-                    class="block mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out"
-                    type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-                <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        {{-- Password dengan tombol show/hide --}}
+        <div class="login-field">
+            <label class="login-label" for="password">Password</label>
+            <div class="login-password-wrap" x-data="{ show: false }">
+                <input id="password" class="login-input" type="password" name="password" required
+                    autocomplete="current-password">
+                <button type="button" class="login-eye-btn" aria-label="Tampilkan password">
+                    <i class="bx bx-hide"></i>
+                </button>
             </div>
-
-            <div>
-                <x-input-label for="password" :value="__('Password')" class="text-gray-700" />
-                <x-text-input id="password"
-                    class="block mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition duration-150 ease-in-out"
-                    type="password" name="password" required autocomplete="current-password" />
-                <x-input-error :messages="$errors->get('password')" class="mt-2" />
-            </div>
-
-            <div class="flex items-center">
-                <input id="remember_me" type="checkbox"
-                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <label for="remember_me" class="ml-2 text-sm text-gray-600">
-                    Remember me
-                </label>
-            </div>
-
-            <div class="mt-4">
-                {!! NoCaptcha::display() !!}
-            </div>
-            @error('g-recaptcha-response')
-                <span class="text-red-500 text-sm">
-                    {{ $message }}
-                </span>
+            @error('password')
+                <span class="login-error">{{ $message }}</span>
             @enderror
+        </div>
 
-            <div class="flex items-center justify-end">
-                <x-primary-button
-                    class="w-full justify-center px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition duration-300 ease-in-out">
-                    {{ __('Log in') }}
-                </x-primary-button>
+        {{-- Remember me --}}
+        <div class="login-remember">
+            <input type="checkbox" id="remember_me" name="remember">
+            <label for="remember_me">Ingat saya</label>
+        </div>
+
+        {{-- reCAPTCHA --}}
+        @if(class_exists(\Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class))
+            <div class="login-captcha">
+                {!! NoCaptcha::display() !!}
+                @error('g-recaptcha-response')
+                    <span class="login-error">{{ $message }}</span>
+                @enderror
             </div>
-            <br>
-        </form>
-    </div>
-    {!! NoCaptcha::renderJs() !!}
+        @endif
+
+        {{-- Tombol login --}}
+        <button type="submit" class="login-btn">
+            <i class="bx bx-log-in"></i>
+            Masuk
+        </button>
+
+    </form>
+
+    {{-- reCAPTCHA script --}}
+    @if(class_exists(\Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class))
+        {!! NoCaptcha::renderJs() !!}
+    @endif
+
 </x-guest-layout>

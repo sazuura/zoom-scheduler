@@ -1,14 +1,3 @@
-/**
- * content.js — Diskominfotik
- *
- * 1. Accordion tabel  — tap baris untuk expand/collapse detail
- * 2. Tab view         — switch tab tanpa reload halaman
- * 3. Sort kolom tabel — klik header untuk sort asc/desc
- *
- * Semua pakai event delegation agar bekerja
- * pada elemen yang di-render server-side (Blade loop).
- */
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // ═══════════════════════════════════════════════════

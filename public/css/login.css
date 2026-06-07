@@ -1,9 +1,3 @@
-/* =============================================================
-   login.css — Halaman Login Diskominfotik
-   Hanya berlaku untuk halaman login (guest layout).
-   Design token dari adminhub.css tetap dipakai via var().
-============================================================= */
-
 /* ── Layout: tengahkan kartu di layar ──────────────────────── */
 body {
     display: flex;

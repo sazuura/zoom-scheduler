@@ -77,6 +77,29 @@ class WhatsAppService
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
 
+    public function templateJadwalDibatalkan(
+        string $namaOperator,
+        string $tanggal,
+        string $waktuMulai,
+        string $waktuSelesai,
+        string $judulKegiatan,
+        string $platform,
+        string $alasan
+    ): string {
+        return "📢 *PEMBATALAN TUGAS PENANGANAN RAPAT*\n\n"
+            . "Halo *{$namaOperator}*,\n"
+            . "Agenda rapat berikut yang sebelumnya ditugaskan kepada Anda telah *DIBATALKAN*:\n\n"
+            . "📌 *Detail Agenda:*\n"
+            . "   - Kegiatan: {$judulKegiatan}\n"
+            . "   - Tanggal: {$tanggal}\n"
+            . "   - Waktu: {$waktuMulai} - {$waktuSelesai} WIB\n"
+            . "   - Platform: {$platform}\n\n"
+            . "⚠️ *Alasan Pembatalan:*\n"
+            . "   \"{$alasan}\"\n\n"
+            . "Terima kasih atas perhatian Anda.\n\n"
+            . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
+    }
+
     /**
      * @param  string  $namaInventaris   Nama petugas inventaris gedung tersebut
      * @param  string  $namaOperator     Nama operator yang mengajukan
@@ -103,6 +126,32 @@ class WhatsAppService
             . "📋 Keperluan: {$keperluan}\n\n"
             . "*Peralatan yang dipinjam:*\n{$daftarPeralatan}\n\n"
             . "Silakan login ke sistem untuk menyetujui atau menolak pengajuan ini.\n"
+            . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
+    }
+
+    public function templatePeminjamanDibatalkan(
+        string $namaInventaris,
+        string $namaOperator,
+        string $gedung,
+        string $tanggalPinjam,
+        string $tanggalKembali,
+        string $keperluan,
+        string $daftarPeralatan,
+        string $alasan
+    ): string {
+        return "📦 *PEMBATALAN PENGAJUAN PEMINJAMAN PERALATAN*\n\n"
+            . "Halo *{$namaInventaris}*,\n"
+            . "Pengajuan peminjaman peralatan berikut telah *DIBATALKAN* oleh pemohon:\n\n"
+            . "👤 *Data Pemohon:*\n"
+            . "   - Nama: {$namaOperator}\n"
+            . "   - Keperluan: {$keperluan}\n\n"
+            . "📅 *Waktu Rencana Peminjaman:*\n"
+            . "   - Tanggal: {$tanggalPinjam} s.d. {$tanggalKembali}\n\n"
+            . "📦 *Daftar Peralatan Terkait:*\n"
+            . "{$daftarPeralatan}\n\n"
+            . "⚠️ *Alasan Pembatalan:*\n"
+            . "   \"{$alasan}\"\n\n"
+            . "Sistem telah otomatis memperbarui status pengajuan dan silakan meninjau stok peralatan terkait.\n\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
 }

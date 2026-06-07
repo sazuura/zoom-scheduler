@@ -20,7 +20,7 @@ Route::get('/dashboard', function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('jadwal', PenjadwalanController::class)->names('jadwal');
-    Route::resource('peralatan', PeralatanController::class)->names('peralatan');
+    Route::get('/peralatan', [AdminController::class, 'peralatanIndex'])->name('peralatan.index');
     Route::resource('users', UserController::class)->names('users');
     Route::prefix('absensi')->name('absensi.')->group(function () {
         Route::get('/',            [AdminController::class, 'absensiIndex'])->name('index');
@@ -32,6 +32,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::get('/export/pdf',  [AdminController::class, 'laporanExportPdf'])->name('exportPdf');
         Route::get('/export/excel',[AdminController::class, 'laporanExportExcel'])->name('exportExcel');
     });
+    Route::post('/jadwal/{id}/batalkan', [PenjadwalanController::class, 'batalkan'])->name('jadwal.batalkan');
 });
 
 Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator'])->group(function () {
@@ -50,11 +51,12 @@ Route::prefix('operator')->name('operator.')->middleware(['auth', 'role:operator
         Route::get('/create', [PeminjamanController::class, 'operatorCreate'])->name('create');
         Route::post('/',      [PeminjamanController::class, 'operatorStore'])->name('store');
     });
+    Route::post('/peminjaman/{id}/batalkan', [PeminjamanController::class, 'operatorBatalkan'])->name('peminjaman.batalkan');
 });
 
 Route::prefix('inventaris')->name('inventaris.')->middleware(['auth', 'role:inventaris'])->group(function () {
     Route::get('/dashboard', [InventarisController::class, 'dashboard'])->name('dashboard');
-    Route::get('/peralatan', [InventarisController::class, 'peralatanIndex'])->name('peralatan.index');
+    Route::resource('peralatan', PeralatanController::class)->names('peralatan');
     Route::prefix('peminjaman')->name('peminjaman.')->group(function () {
         Route::get('/',              [PeminjamanController::class, 'inventarisIndex'])->name('index');
         Route::post('/{id}/approve', [PeminjamanController::class, 'inventarisApprove'])->name('approve');
