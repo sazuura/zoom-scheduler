@@ -27,6 +27,7 @@
                 <select name="status" class="toolbar-select">
                     <option value="">Semua Status</option>
                     <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                    <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
                     <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                 </select>
                 <button type="submit" class="toolbar-btn primary"><i class="bx bx-filter"></i> Filter</button>
@@ -72,7 +73,8 @@
                                 </td>
                                 <td class="hide-mobile">{{ $j->tanggal->translatedFormat('d M Y') }}</td>
                                 <td class="hide-mobile">{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
-                                    {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}</td>
+                                    {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }}
+                                </td>
                                 <td class="hide-mobile">
                                     @if(str_contains($j->platform, 'Online'))
                                         <span class="badge badge-info"><i class="bx bx-wifi"></i> Online</span>
@@ -82,9 +84,17 @@
                                 </td>
                                 <td>
                                     @if($dibatalkan)
-                                        <span class="badge badge-danger"><i class="bx bx-x-circle"></i> Dibatalkan</span>
+                                        <span class="badge badge-danger">
+                                            <i class="bx bx-x-circle"></i> Dibatalkan
+                                        </span>
+                                    @elseif($sudahLewat)
+                                        <span class="badge badge-active">
+                                            <i class="bx bx-check-double"></i> Selesai
+                                        </span>
                                     @else
-                                        <span class="badge badge-active"><i class="bx bx-check-circle"></i> Aktif</span>
+                                        <span class="badge badge-info">
+                                            <i class="bx bx-check-circle"></i> Aktif
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
@@ -118,7 +128,8 @@
                                         <div class="detail-item">
                                             <label>Waktu</label>
                                             <p>{{ \Carbon\Carbon::parse($j->waktu_mulai)->format('H:i') }} -
-                                                {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB</p>
+                                                {{ \Carbon\Carbon::parse($j->waktu_selesai)->format('H:i') }} WIB
+                                            </p>
                                         </div>
                                         <div class="detail-item">
                                             <label>Platform</label>

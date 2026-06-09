@@ -64,15 +64,16 @@ class WhatsAppService
         string $waktuMulai,
         string $waktuSelesai,
         string $judulKegiatan,
-        string $platform
+        string $platform,
+        string $keterangan 
     ): string {
         return "📢 *JADWAL RAPAT BARU*\n\n"
             . "Halo *{$namaOperator}*,\n"
-            . "Anda ditugaskan untuk menangani rapat berikut:\n\n"
-            . "📌 *{$judulKegiatan}*\n"
+            . "Anda ditugaskan untuk menangani rapat *{$judulKegiatan}* berikut:\n\n"
             . "📅 Tanggal : {$tanggal}\n"
             . "⏰ Waktu   : {$waktuMulai} - {$waktuSelesai} WIB\n"
-            . "💻 Platform: {$platform}\n\n"
+            . "💻 Platform: {$platform}\n"
+            . "📌 Keterangan: {$keterangan}\n\n"
             . "Harap cek sistem untuk detail lengkap dan konfirmasi kehadiran Anda.\n"
             . "_Pesan ini dikirim otomatis oleh Sistem Penjadwalan Diskominfotik._";
     }
@@ -84,16 +85,17 @@ class WhatsAppService
         string $waktuSelesai,
         string $judulKegiatan,
         string $platform,
-        string $alasan
+        string $alasan,
+        string $keterangan 
     ): string {
         return "📢 *PEMBATALAN TUGAS PENANGANAN RAPAT*\n\n"
             . "Halo *{$namaOperator}*,\n"
-            . "Agenda rapat berikut yang sebelumnya ditugaskan kepada Anda telah *DIBATALKAN*:\n\n"
+            . "Agenda rapat *{$judulKegiatan}* berikut yang sebelumnya ditugaskan kepada Anda telah *DIBATALKAN*:\n\n"
             . "📌 *Detail Agenda:*\n"
-            . "   - Kegiatan: {$judulKegiatan}\n"
             . "   - Tanggal: {$tanggal}\n"
             . "   - Waktu: {$waktuMulai} - {$waktuSelesai} WIB\n"
-            . "   - Platform: {$platform}\n\n"
+            . "   - Platform: {$platform}\n"
+            . "   - Keterangan: {$keterangan}\n\n"
             . "⚠️ *Alasan Pembatalan:*\n"
             . "   \"{$alasan}\"\n\n"
             . "Terima kasih atas perhatian Anda.\n\n"

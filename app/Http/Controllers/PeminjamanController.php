@@ -65,10 +65,15 @@ class PeminjamanController extends Controller
         $peminjaman = Peminjaman::with(['user', 'items.peralatan'])
             ->whereHas('items.peralatan', fn($q) => $q->where('gedung', $gedung))
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
+            ->when($request->id_user, fn($q, $v) => $q->where('id_user', $v))
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
-        return view('inventaris.peminjaman.index', compact('peminjaman', 'gedung'));
+        $operatorList = \App\Models\User::where('role', 'operator')
+            ->where('status', 'active')
+            ->orderBy('nama_user')
+            ->get();
+        return view('inventaris.peminjaman.index', compact('peminjaman', 'gedung', 'operatorList'));
     }
     public function inventarisApprove(Request $request, string $id)
     {

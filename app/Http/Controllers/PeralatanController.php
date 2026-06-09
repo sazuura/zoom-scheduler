@@ -9,12 +9,21 @@ class PeralatanController extends Controller
 {
     public function index(Request $request)
     {
+        $userGedung = auth()->user()->gedung;
+        $userRole   = auth()->user()->role; 
         $peralatan = Peralatan::query()
-            ->when($request->search, fn($q, $s) =>
-                $q->where('nama_peralatan', 'like', "%{$s}%")
-                  ->orWhere('kode_barang',  'like', "%{$s}%")
-                  ->orWhere('gedung',       'like', "%{$s}%")
-            )
+            ->when($userRole !== 'admin', function ($q) use ($userGedung) {
+                return $q->where('gedung', $userGedung);
+            })
+            ->when($request->search, function ($q, $s) use ($userRole, $userGedung) {
+                return $q->where(function ($subQuery) use ($s, $userRole, $userGedung) {
+                    $subQuery->where('nama_peralatan', 'like', "%{$s}%")
+                            ->orWhere('kode_barang', 'like', "%{$s}%");
+                    if ($userRole === 'admin') {
+                        $subQuery->orWhere('gedung', 'like', "%{$s}%");
+                    }
+                });
+            })
             ->when($request->gedung, fn($q, $v) => $q->where('gedung', $v))
             ->when($request->status, fn($q, $v) => match ($v) {
                 'tersedia'       => $q->whereRaw('(stok - COALESCE(rusak,0) - COALESCE(perbaikan,0)) > 0'),
@@ -25,7 +34,11 @@ class PeralatanController extends Controller
             ->orderBy('nama_peralatan')
             ->paginate(10)
             ->withQueryString();
-        $gedungList = Peralatan::distinct()->orderBy('gedung')->pluck('gedung');
+        $gedungQuery = Peralatan::distinct()->orderBy('gedung');
+        if ($userRole !== 'admin') {
+            $gedungQuery->where('gedung', $userGedung);
+        }
+        $gedungList = $gedungQuery->pluck('gedung');
         return view('inventaris.peralatan.index', compact('peralatan', 'gedungList'));
     }
     public function create()

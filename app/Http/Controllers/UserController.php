@@ -38,7 +38,7 @@ class UserController extends Controller
             'gedung.required_if' => 'Nama gedung wajib diisi untuk role inventaris.',
         ]);
         User::create([
-            'id_user'   => IdGenerator::next(User::class, 'id_user', 'US'),
+            'id_user'   => IdGenerator::next(User::class, 'id_user', 'USR-'),
             'nama_user' => $data['nama_user'],
             'nohp'      => $data['nohp'],
             'email'     => $data['email'],

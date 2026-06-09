@@ -5,12 +5,14 @@ use App\Models\Penjadwalan;
 use App\Models\User;
 use App\Services\PenjadwalanService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PenjadwalanController extends Controller
 {
     public function __construct(private PenjadwalanService $service) {}
     public function index(Request $request)
     {
+        $this->updateJadwalSelesai();
         $jadwal = Penjadwalan::with(['absensi.user', 'jadwalPeralatan.peralatan'])
             ->when($request->search, fn($q, $s) =>
                 $q->where('judul_kegiatan', 'like', "%{$s}%")
@@ -18,6 +20,9 @@ class PenjadwalanController extends Controller
             )
             ->when($request->platform, fn($q, $p) =>
                 $q->where('platform', 'like', "%{$p}%")
+            )
+            ->when($request->status, fn($q, $o) =>
+                $q->where('status', 'like', "%{$o}%")
             )
             ->orderByDesc('tanggal')
             ->paginate(10)
@@ -139,5 +144,15 @@ class PenjadwalanController extends Controller
         }
         return redirect()->route('admin.jadwal.index')
             ->with('success', 'Jadwal berhasil dibatalkan dan notifikasi WA telah dikirim ke operator.');
+    }
+    private function updateJadwalSelesai()
+    {
+        Penjadwalan::where('status', 'aktif')
+            ->whereRaw(
+                "TIMESTAMP(tanggal, waktu_selesai) <= NOW()"
+            )
+            ->update([
+                'status' => 'selesai'
+            ]);
     }
 }
